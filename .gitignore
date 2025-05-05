@@ -1,0 +1,29 @@
+# belong in git's global ignore instead:
+# `$XDG_CONFIG_HOME/git/ignore` or `~/.config/git/ignore`
+
+# Ignore bundler config.
+back/.bundle
+
+# Ignore all environment files.
+back/.env*
+
+# Ignore all logfiles and tempfiles.
+back/log/*
+back/tmp/*
+!back/log/.keep
+!back/tmp/.keep
+
+# Ignore pidfiles, but keep the directory.
+back/tmp/pids/*
+!back/tmp/pids/
+!back/tmp/pids/.keep
+
+# Ignore storage (uploaded files in development and any SQLite databases).
+back/storage/*
+!back/storage/.keep
+back/tmp/storage/*
+!back/tmp/storage/
+!back/tmp/storage/.keep
+
+# Ignore master key for decrypting credentials and more.
+back/config/master.key
