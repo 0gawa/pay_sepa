@@ -6,6 +6,7 @@ class Settlement < ApplicationRecord
   validates :amount, presence: true, numericality: { greater_than: 0 }
   validates :from_user, presence: true
   validates :to_user, presence: true
+  validates :group_id, presence: true
   validate :from_and_to_users_must_be_different
 
   private
