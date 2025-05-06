@@ -15,6 +15,8 @@ class V1::TransactionsController < ApplicationController
     # participant_ids を受け取る想定
     participant_ids = params[:transaction].delete(:participant_ids) || []
     transaction = Transaction.new(transaction_params)
+    set_group
+    transaction.group_id = @group.id
 
     if participant_ids.empty?
        render json: { errors: ["対象者が選択されていません"] }, status: :unprocessable_entity
@@ -54,5 +56,9 @@ class V1::TransactionsController < ApplicationController
 
   def transaction_params
     params.require(:transaction).permit(:payer_id, :amount, :description)
+  end
+
+  def set_group
+    @group = Group.find(params[:group_id])
   end
 end
