@@ -2,6 +2,6 @@
 誰が、誰に、どれくらい立て替えたのかわかるアプリ
 
 # 技術
-backend: Rails
-frontend: React
-db: postgresql
+- backend: Rails
+- frontend: React
+- db: postgresql
