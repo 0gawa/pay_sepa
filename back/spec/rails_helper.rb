@@ -60,6 +60,4 @@ RSpec.configure do |config|
   
   # FactoryBotのクラス名を省略できるようにする
   config.include FactoryBot::Syntax::Methods
-
-  config.include DeviseAuthHelper, type: :request
 end
