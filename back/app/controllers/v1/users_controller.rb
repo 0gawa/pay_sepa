@@ -1,6 +1,8 @@
 class V1::UsersController < ApplicationController
   def create
     user = User.new(user_params)
+    group = Group.find(params[:group_id])
+    user.group_id = group.id
     if user.save
       render json: user.as_json(only: [:id, :name]), status: :created
     else

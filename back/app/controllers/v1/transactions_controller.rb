@@ -15,10 +15,12 @@ class V1::TransactionsController < ApplicationController
     # participant_ids を受け取る想定
     participant_ids = params[:transaction].delete(:participant_ids) || []
     transaction = Transaction.new(transaction_params)
+    set_group
+    transaction.group_id = @group.id
 
     if participant_ids.empty?
-       render json: { errors: ["対象者が選択されていません"] }, status: :unprocessable_entity
-       return
+      render json: { errors: ["対象者が選択されていません"] }, status: :unprocessable_entity
+      return
     end
 
     # トランザクション内で参加者も保存
@@ -29,11 +31,6 @@ class V1::TransactionsController < ApplicationController
         raise ActiveRecord::RecordInvalid, "無効な対象者が含まれています"
       end
       transaction.participants = participants
-      # 均等割りの share_amount を計算して保存する場合
-      # share = transaction.amount / participants.size
-      # participants.each do |p|
-      #   TransactionParticipation.find_by(transaction: transaction, user: p).update!(share_amount: share)
-      # end
     end
 
     render json: transaction.as_json(include: [:payer, :participants]), status: :created
@@ -54,5 +51,9 @@ class V1::TransactionsController < ApplicationController
 
   def transaction_params
     params.require(:transaction).permit(:payer_id, :amount, :description)
+  end
+
+  def set_group
+    @group = Group.find(params[:group_id])
   end
 end
