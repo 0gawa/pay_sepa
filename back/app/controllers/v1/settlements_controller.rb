@@ -18,7 +18,7 @@ class V1::SettlementsController < ApplicationController
     # 全額清算ロジック (amount がない場合)
     if settlement.amount.blank? && settlement.from_user_id && settlement.to_user_id
       # BalanceCalculator サービスなどを使って計算
-      calculator = BalanceCalculator.new(settlement.to_user_id, settlement.from_user_id)
+      calculator = OptimalSettlementCalculator.new(settlement.to_user_id, settlement.from_user_id)
       amount_to_settle = calculator.calculate # from_user が to_user に支払うべき額
       if amount_to_settle <= 0
         render json: { errors: ["支払うべき残高がありません"] }, status: :unprocessable_entity
