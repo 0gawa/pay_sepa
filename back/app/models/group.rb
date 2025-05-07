@@ -2,7 +2,7 @@ class Group < ApplicationRecord
   before_create :set_id
   
   has_many :users, dependent: :destroy
-  has_many :transactions, dependent: :destroy
+  has_many :transaction_data, dependent: :destroy, class_name: 'Transaction'
   has_many :settlements, dependent: :destroy
 
   validates :name, presence: true, length: {maximum: 50}

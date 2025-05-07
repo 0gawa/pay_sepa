@@ -38,15 +38,15 @@ RSpec.describe "About Group", type: :model do
   describe "アソシエーションのチェック" do
     it "Userと1:Nの関係にある" do
       expect(Group.reflect_on_association(:users).macro).to eq(:has_many)
-      expect(User.reflect_on_association(:groups).macro).to eq(:belongs_to)
+      expect(User.reflect_on_association(:group).macro).to eq(:belongs_to)
     end
     it "Settlementと1:Nの関係にある" do
       expect(Group.reflect_on_association(:settlements).macro).to eq(:has_many)
-      expect(Settlement.reflect_on_association(:groups).macro).to eq(:belongs_to)
+      expect(Settlement.reflect_on_association(:group).macro).to eq(:belongs_to)
     end
     it "Transactionと1:Nの関係にある" do
-      expect(Group.reflect_on_association(:transactions).macro).to eq(:has_many)
-      expect(Transaction.reflect_on_association(:groups).macro).to eq(:belongs_to)
+      expect(Group.reflect_on_association(:transaction_data).macro).to eq(:has_many)
+      expect(Transaction.reflect_on_association(:group).macro).to eq(:belongs_to)
     end
   end
 end
