@@ -1,7 +1,18 @@
 require 'rails_helper'
 
-RSpec.describe "V1::Transactions", type: :request do
-  describe "GET /index" do
-    pending "add some examples (or delete) #{__FILE__}"
+RSpec.describe "V1::Transactionsコントローラーについて", type: :request do
+  describe "indexアクションについて" do
+    it "パスが存在する" do
+    end
+  end
+
+  describe "createアクションについて" do
+    it "パスが存在する" do
+    end
+  end
+
+  describe "destroyアクションについて" do
+    it "パスが存在する" do
+    end
   end
 end
