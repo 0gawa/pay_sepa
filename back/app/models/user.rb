@@ -5,6 +5,6 @@ class User < ApplicationRecord
   has_many :transaction_participations
   has_many :settlements
 
-  validates :name, presence: true, length: {maximum: 50}
+  validates :name,     presence: true, length: {maximum: 50}
   validates :group_id, presence: true
 end
