@@ -6,7 +6,6 @@ class Transaction < ApplicationRecord
 
   validates :amount, presence: true, numericality: { greater_than: 0 }
   validates :payer, presence: true
-  validates :participants, presence: true # 取引には相手が必ず1人以上いる必要がある
   validates :group, presence: true
   validates :description, length: {maximum: 300}
 end
