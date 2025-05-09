@@ -9,5 +9,11 @@ class Transaction < ApplicationRecord
   validates :group,  presence: true
   validates :description, length: {maximum: 300}
 
-  # TODO: 取引の相手が存在するかのロジックを作成
+  private
+
+  def has_participants?
+    unless participants.present?
+      raise ActiveRecord::RecordInvalid, "取引の相手がいません"
+    end
+  end
 end

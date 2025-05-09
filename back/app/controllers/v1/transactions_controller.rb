@@ -3,6 +3,7 @@ class V1::TransactionsController < ApplicationController
     transactions = Transaction.includes(:payer, :participants).order(created_at: :desc)
     render json: transactions.as_json(
       include: {
+        group: { only: [:id, :name] },
         payer: { only: [:id, :name] },
         participants: { only: [:id, :name] }
       },
@@ -12,9 +13,11 @@ class V1::TransactionsController < ApplicationController
   end
 
   def create
-    # participant_ids を受け取る想定
+    # paramsからparticipant_idsを取り出す。要素は配列
     participant_ids = params[:transaction].delete(:participant_ids) || []
+    
     transaction = Transaction.new(transaction_params)
+    
     set_group
     transaction.group_id = @group.id
 
@@ -25,12 +28,12 @@ class V1::TransactionsController < ApplicationController
 
     # トランザクション内で参加者も保存
     ActiveRecord::Base.transaction do
-      transaction.save!
       participants = User.where(id: participant_ids)
       if participants.size != participant_ids.size
         raise ActiveRecord::RecordInvalid, "無効な対象者が含まれています"
       end
       transaction.participants = participants
+      transaction.save!
     end
 
     render json: transaction.as_json(include: [:payer, :participants]), status: :created
@@ -50,10 +53,13 @@ class V1::TransactionsController < ApplicationController
   private
 
   def transaction_params
-    params.require(:transaction).permit(:payer_id, :amount, :description)
+    params.require(:transaction).permit(:payer_id, :amount, :description, :participant_ids[])
   end
 
   def set_group
     @group = Group.find(params[:group_id])
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: "Group not found" }, status: :not_found
+    return
   end
 end
