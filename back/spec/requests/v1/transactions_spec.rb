@@ -1,8 +1,10 @@
 require 'rails_helper'
 
 RSpec.describe "V1::Transactionsコントローラーについて", type: :request do
-  let!(:group) {create(:group)}
-  let!(:main_user) {create(:user, group: group)}
+  let!(:group)        {create(:group)}
+  let!(:payer)        { create(:user, name: "Payer User",         group: group) }
+  let!(:participant1) { create(:user, name: "Participant User 1", group: group) }
+  let!(:participant2) { create(:user, name: "Participant User 2", group: group) }
 
   describe "indexアクションについて" do
     it "パスが存在する" do
@@ -11,18 +13,26 @@ RSpec.describe "V1::Transactionsコントローラーについて", type: :reque
     end
 
     context "取引が存在するとき" do
-      let!(:transaction1) {create(:transaction, group: group, payer: main_user)}
-      let!(:transaction2) {create(:transaction, group: group, payer: main_user)}
-      let(:tp_user1) {create(:user, group: group)} # 取引相手1
-      let(:tp_user2) {create(:user, group: group)} # 取引相手2
-      let!(:tp1) {transaction1.transaction_participations.create(user_id: tp_user1.id)}
-      let!(:tp2) {transaction2.transaction_participations.create(user_id: tp_user2.id)}
-
+      # transactionデータを2つ生成
+      let!(:transaction1) do
+        create(:transaction, payer: payer, description: "Lunch", amount: 3000).tap do |t|
+          t.transaction_participations.create(user_id: participant1.id)
+          t.transaction_participations.create(user_id: participant2.id)
+        end
+      end
+      let!(:transaction2) do
+        create(:transaction, payer: participant1, description: "Dinner", amount: 5000).tap do |t|
+          t.transaction_participations.create(user_id: payer.id)
+          t.transaction_participations.create(user_id: participant2.id)
+        end
+      end
+      
       before { get "http://localhost:3001/" + v1_group_transactions_path(group_id: group.id) }
 
       it "正しいレスポンスをJSON形式で返す" do
         json_response = JSON.parse(response.body)
-        expect(json_response.size).to eq(3)
+        puts json_response
+        expect(json_response.size).to eq(2)
       end
       it "各取引に必要なキーが含まれていること" do
         json_response = JSON.parse(response.body)
@@ -50,14 +60,13 @@ RSpec.describe "V1::Transactionsコントローラーについて", type: :reque
   end
 
   describe "createアクションについて" do
-    let(:other_user) {create(:user, group: group)}
     let(:valid_attributes) do
       {
         transaction: {
-          payer_id: main_user.id,
+          payer_id: payer.id,
           amount: 1500.0,
           description: "Coffee Break",
-          participant_ids: [other_user.id]
+          participant_ids: [payer.id, participant1.id]
         }
       }
     end
@@ -76,10 +85,114 @@ RSpec.describe "V1::Transactionsコントローラーについて", type: :reque
         post "http://localhost:3001/" + v1_group_transactions_path(group_id: group.id), params: valid_attributes
         json_response = JSON.parse(response.body)
         expect(json_response["description"]).to eq("Coffee Break")
-        expect(json_response["payer"]["id"]).to eq(main_user.id)
+        expect(json_response["payer"]["id"]).to eq(payer.id)
         expect(json_response["participants"].size).to eq(1)
-        expect(json_response["participants"].map{ |p| p["id"] }).to match_array([other_user.id])
+        expect(json_response["participants"].map{ |p| p["id"] }).to match_array([payer.id, participant1.id])
       end
+    end
+
+    context "無効なパラメータの場合" do
+      context "必須パラメータが欠けている場合 (amountなど)" do
+        let(:invalid_attributes_missing_amount) do
+          {
+            transaction: {
+              payer_id: payer.id,
+              # amount: nil, # amount を欠けさせる
+              description: "Invalid Transaction",
+              participant_ids: [payer.id, participant1.id]
+            }
+          }
+        end
+
+        before { post "http://localhost:3001/" + v1_group_transactions_path(group_id: group.id), params: invalid_attributes_missing_amount }
+
+        it "HTTPステータス422を返すこと" do
+          expect(response).to have_http_status(:unprocessable_entity)
+        end
+
+        it "エラーメッセージをJSONで返すこと" do
+          json_response = JSON.parse(response.body)
+          expect(json_response["errors"]).to include("Amount can't be blank", "Amount is not a number")
+        end
+
+        it "取引を作成しないこと" do
+          expect {
+            post "http://localhost:3001/" + v1_group_transactions_path(group_id: group.id), params: invalid_attributes_missing_amount
+          }.not_to change(Transaction, :count)
+        end
+      end
+
+      context "participant_ids が空の場合" do
+        let(:invalid_attributes_no_participants) do
+          {
+            transaction: {
+              payer_id: payer.id,
+              amount: 1000,
+              description: "No Participants",
+              participant_ids: [] # 参加者なし
+            }
+          }
+        end
+
+        before {  post "http://localhost:3001/" + v1_group_transactions_path(group_id: group.id), params: invalid_attributes_no_participants }
+
+        it "HTTPステータス422を返すこと" do
+          expect(response).to have_http_status(:unprocessable_entity)
+        end
+
+        it "エラーメッセージを返すこと" do
+          json_response = JSON.parse(response.body)
+          expect(json_response["errors"]).to include("対象者が選択されていません")
+        end
+      end
+
+      context "participant_ids に存在しないユーザーIDが含まれる場合" do
+        let(:invalid_attributes_invalid_participant) do
+          {
+            transaction: {
+              payer_id: payer.id,
+              amount: 1000,
+              description: "Invalid Participant",
+              participant_ids: [payer.id, 9999] # 9999は存在しないIDと仮定
+            }
+          }
+        end
+
+        before { post "http://localhost:3001/" + v1_group_transactions_path(group_id: group.id), params: invalid_attributes_invalid_participant }
+
+        it "HTTPステータス422を返すこと" do
+          expect(response).to have_http_status(:unprocessable_entity)
+        end
+
+        it "エラーメッセージを返すこと" do
+          json_response = JSON.parse(response.body)
+          expect(json_response["errors"]).to include("無効な対象者が含まれています")
+        end
+      end
+
+      context "payer_id が存在しない場合" do
+        let(:invalid_attributes_invalid_payer) do
+           {
+             transaction: {
+               payer_id: 9999, # 存在しないPayer ID
+               amount: 1000,
+               description: "Invalid Payer",
+               participant_ids: [participant1.id]
+             }
+           }
+         end
+
+         before { post "http://localhost:3001/" + v1_group_transactions_path(group_id: group.id), params: invalid_attributes_invalid_payer }
+
+         it "HTTPステータス422を返すこと" do
+           expect(response).to have_http_status(:unprocessable_entity)
+         end
+
+         it "エラーメッセージを返すこと" do
+           json_response = JSON.parse(response.body)
+           expect(json_response["errors"]).to include("Payer must exist")
+         end
+       end
     end
   end
 
