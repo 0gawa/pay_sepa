@@ -3,6 +3,7 @@ class V1::TransactionsController < ApplicationController
     transactions = Transaction.includes(:payer, :participants).order(created_at: :desc)
     render json: transactions.as_json(
       include: {
+        group: { only: [:id, :name] },
         payer: { only: [:id, :name] },
         participants: { only: [:id, :name] }
       },
@@ -52,7 +53,7 @@ class V1::TransactionsController < ApplicationController
   private
 
   def transaction_params
-    params.require(:transaction).permit(:payer_id, :amount, :description)
+    params.require(:transaction).permit(:payer_id, :amount, :description, :participant_ids[])
   end
 
   def set_group
