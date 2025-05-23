@@ -1,8 +1,86 @@
 class V1::BalancesController < ApplicationController
   def index
     group = Group.find(params[:group_id])
-    balances = group.users.map do |friend|
-      
+    transactions = group.transaction_data
+
+    total_cost = transactions.sum(:amount)
+    average_cost_per_person = total_cost / group.users.count
+    # 清算するための取引を保存
+    settlement_transactions = []
+
+    # 取引に参加した全員を取得（ただし、重複なし）
+    all_participants = transactions.each_with_object(Set.new) do |t, memo|
+      memo << t.payer
+      t.participants.each {|p| memo << p}
+    end.to_a
+    net_balances = Hash.new(0.0)
+
+    transactions.each do |transaction|
+      payer    = transaction.payer
+      amount   = transaction.amount.to_f
+      for_whom = transaction.participants
+
+      net_balances[payer] += amount
+
+      num_beneficiaries = for_whom.count
+      cost_per_beneficiary = amount / num_beneficiaries
+
+      for_whom.each do |beneficiary|
+        net_balances[beneficiary] -= cost_per_beneficiary
+      end
+      # 浮動小数の微小な誤差を防ぐために、小数2桁にする
+      net_balances.transform_values! { |balance| balance.round(2) }
+
+      # 2. 債権者と債務者をリストアップする
+      # 債権者 (receivers): net_balance > 0
+      # 債務者 (payers): net_balance < 0
+      receivers = net_balances.select { |_person, balance| balance > 0 }
+                            .sort_by { |_person, balance| -balance } # 大きい順
+
+      payers    = net_balances.select { |_person, balance| balance < 0 }
+                            .sort_by { |_person, balance| balance } # 小さい順
     end
+
+    receivers_map = receivers.to_h
+    payers_map    = payers.to_h
+
+    while !receivers_map.empty? && !payers_map.empty?
+      current_receiver_name, current_receiver_balance = receivers_map.first
+      current_payer_name, current_payer_balance = payers_map.first
+
+      # 債務者が支払うべき金額(債務者はbalanceが負の値であるためabsを取る)
+      payer_owes_amount = current_payer_balance.abs
+      # 清算する金額は、債権者が受け取るべき金額と債務者が支払うべき金額のmin
+      amount_to_settle = [payer_owes_amount, current_receiver_balance].min
+
+      settlement_transactions << {
+        payer: current_payer_name,
+        receiver: current_receiver_name,
+        amount: amount_to_settle.round(2) # 小数点以下2桁に丸める
+      }
+
+      payers_map[current_payer_name] += amount_to_settle
+      receivers_map[current_receiver_name] -= amount_to_settle
+
+      # 清算が完了した人をリストから削除 (浮動小数点数の比較のため微小な誤差を許容)
+      if payers_map[current_payer_name].abs < 0.01
+        payers_map.delete(current_payer_name)
+      end
+      if receivers_map[current_receiver_name] < 0.01
+        receivers_map.delete(current_receiver_name)
+      end
+
+      receivers_map = receivers_map.sort_by { |_person, balance| -balance }.to_h
+      payers_map    = payers_map.sort_by { |_person, balance| balance }.to_h
+    end
+
+    hash_settlement_transactions = settlement_transactions.map do |transaction|
+                                    {
+                                      payer: transaction[:payer],
+                                      receiver: transaction[:receiver],
+                                      amount: transaction[:amount]
+                                    }
+                                   end
+    render json: hash_settlement_transactions, status: :ok
   end
 end

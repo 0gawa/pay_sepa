@@ -17,9 +17,7 @@ class V1::SettlementsController < ApplicationController
     settlement = group.settlements.new(settlement_params)
     # 全額清算ロジック (amount がない場合)
     if settlement.amount.blank? && settlement.from_user_id && settlement.to_user_id
-      # BalanceCalculator サービスなどを使って計算
-      calculator = OptimalSettlementCalculator.new(settlement.to_user_id, settlement.from_user_id)
-      amount_to_settle = calculator.calculate # from_user が to_user に支払うべき額
+      amount_to_settle = BalanceCalculatorService.call(settlement.to_user_id, settlement.from_user_id)
       if amount_to_settle <= 0
         render json: { errors: ["支払うべき残高がありません"] }, status: :unprocessable_entity
         return
@@ -35,11 +33,11 @@ class V1::SettlementsController < ApplicationController
   end
 
    def destroy
-     settlement = Settlement.find(params[:id])
-     settlement.destroy
-     head :no_content
+    settlement = Settlement.find(params[:id])
+    settlement.destroy
+    head :no_content
    rescue ActiveRecord::RecordNotFound
-     render json: { error: "Settlement not found" }, status: :not_found
+    render json: { error: "Settlement not found" }, status: :not_found
    end
 
   private
