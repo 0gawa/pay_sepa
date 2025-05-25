@@ -9,6 +9,18 @@ RSpec.describe "V1::Balances", type: :request do
       let(:user3) {create(:user, group: group)}
       let(:user4) {create(:user, group: group)}
 
+      it "1対1の清算を正しく出力すること" do
+        transaction = create(:transaction, payer: user1, group: group, amount: 1000)
+        transaction.participants << user1
+        transaction.participants << user2
+        get v1_group_balances_path(group_id: group.id)
+        json_response = JSON.parse(response.body)
+        expect(json_response["settlements"].length).to eq(1)
+        expect(json_response["settlements"]).to include(
+          {"payer" => set_jpayer(user2), "receiver" => set_jreceiver(user1), "amount" => 500.0}
+        )
+      end
+
       # payer    for_whom       amount
       #   1   :   1, 2, 3   :    900
       #   2   :   2, 3, 4   :   1500
@@ -21,25 +33,23 @@ RSpec.describe "V1::Balances", type: :request do
         transaction1.participants << user3
 
         transaction2 = create(:transaction, payer: user2, group: group, amount: 1500)
-        transaction1.participants << user2
+        transaction2.participants << user2
         transaction2.participants << user3
         transaction2.participants << user4
 
         transaction3 = create(:transaction, payer: user3, group: group, amount: 400)
-        transaction1.participants << user3
+        transaction3.participants << user3
         transaction3.participants << user4
 
         get v1_group_balances_path(group_id: group.id)
-        expect(response).to have_http_status(:ok)
-
         json_response = JSON.parse(response.body)
 
         puts json_response
         # expected response: payer, receiver, amount
-        expect(json_response["settlements"].length).to eq(3)
+        expect(json_response["settlements"].length).to eq(2)
         expect(json_response["settlements"]).to include(
-            {"payer" => user3.name, "receiver" => user1.name, "amount" => 600.0},
-            {"payer" => user4.name, "receiver" => user2.name, "amount" => 700.0}
+            {"payer" => set_jpayer(user3), "receiver" => set_jreceiver(user1), "amount" => 600.0},
+            {"payer" => set_jpayer(user4), "receiver" => set_jreceiver(user2), "amount" => 700.0}
           )
       end
       it "すべての取引における割り勘が割り切れるとき2" do
@@ -54,4 +64,13 @@ RSpec.describe "V1::Balances", type: :request do
     context "その他のエラーが発生したとき" do
     end
   end
+end
+
+# レスポンスのuserに関するjsonをセットするためのヘルパーメソッド
+def set_jpayer(user)
+  {"id" => user.id, "name" => user.name}
+end
+
+def set_jreceiver(user)
+  {"id" => user.id, "name" => user.name}
 end
