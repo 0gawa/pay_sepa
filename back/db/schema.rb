@@ -33,12 +33,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_06_090021) do
   end
 
   create_table "transaction_participations", force: :cascade do |t|
-    t.bigint "user_id", null: false
-    t.bigint "transaction_id", null: false
+    t.bigint "user_id"
+    t.bigint "transaction_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["transaction_id"], name: "index_transaction_participations_on_transaction_id"
-    t.index ["user_id", "transaction_id"], name: "index_transaction_participations_on_user_id_and_transaction_id", unique: true
     t.index ["user_id"], name: "index_transaction_participations_on_user_id"
   end
 
@@ -61,7 +60,5 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_06_090021) do
 
   add_foreign_key "settlements", "users", column: "from_user_id"
   add_foreign_key "settlements", "users", column: "to_user_id"
-  add_foreign_key "transaction_participations", "transactions"
-  add_foreign_key "transaction_participations", "users"
   add_foreign_key "transactions", "users", column: "payer_id"
 end
