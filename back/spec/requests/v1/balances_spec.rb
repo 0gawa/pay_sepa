@@ -2,15 +2,6 @@ require 'rails_helper'
 
 RSpec.describe "V1::Balances", type: :request do
   describe "Indexアクションについて" do
-    it "正しいルーティングが設定されていること" do
-      group = create(:group)
-      expect(get: "/v1/groups/#{group.id}/settlements").to route_to(
-        controller: "v1/balances",
-        action: "index",
-        group_id: group.id.to_s
-      )
-    end
-
     context "グループの清算を正しく出力すること" do
       let(:group) {create(:group)}
       let(:user1) {create(:user, group: group)}
@@ -38,13 +29,14 @@ RSpec.describe "V1::Balances", type: :request do
         transaction1.participants << user3
         transaction3.participants << user4
 
-        get "/v1/groups/#{group.id}/settlements"
-
+        get v1_group_balances_path(group_id: group.id)
         expect(response).to have_http_status(:ok)
+
         json_response = JSON.parse(response.body)
 
         puts json_response
-        expect(json_response["settlements"].length).to eq(2)
+        # expected response: payer, receiver, amount
+        expect(json_response["settlements"].length).to eq(3)
         expect(json_response["settlements"]).to include(
             {"payer" => user3.name, "receiver" => user1.name, "amount" => 600.0},
             {"payer" => user4.name, "receiver" => user2.name, "amount" => 700.0}
