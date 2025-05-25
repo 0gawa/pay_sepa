@@ -1,10 +1,17 @@
 class V1::BalancesController < ApplicationController
+  # for_whomには取引に関わった全ての人が保存される
+  # 例） A,B,Cがタクシーに乗り、Aがタクシー代を支払った場合
+  # payer: A, for_whom: [A, B, C]となる
+  # 自分自身Aも含まれることに注意
   def index
     group = Group.find(params[:group_id])
     transactions = group.transaction_data
 
-    total_cost = transactions.sum(:amount)
-    average_cost_per_person = total_cost / group.users.count
+    if !transactions.present?
+      render json: {message: "Transactions not found"}, status: :not_found
+      return
+    end
+
     # 清算するための取引を保存
     settlement_transactions = []
 
@@ -74,13 +81,8 @@ class V1::BalancesController < ApplicationController
       payers_map    = payers_map.sort_by { |_person, balance| balance }.to_h
     end
 
-    hash_settlement_transactions = settlement_transactions.map do |transaction|
-                                    {
-                                      payer: transaction[:payer],
-                                      receiver: transaction[:receiver],
-                                      amount: transaction[:amount]
-                                    }
-                                   end
-    render json: hash_settlement_transactions, status: :ok
+    render json: {"settlements": settlement_transactions}, status: :ok
+  rescue => e
+    render json: {error: e.message}, status: :unprocessable_entity
   end
 end
