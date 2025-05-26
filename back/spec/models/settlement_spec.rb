@@ -1,5 +1,4 @@
 require 'rails_helper'
 
-RSpec.describe Settlement, type: :model do
-  pending "add some examples to (or delete) #{__FILE__}"
+RSpec.describe "About Settlement", type: :model do
 end
