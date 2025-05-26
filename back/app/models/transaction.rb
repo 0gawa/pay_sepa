@@ -5,6 +5,15 @@ class Transaction < ApplicationRecord
   has_many :participants, through: :transaction_participations, source: :user
 
   validates :amount, presence: true, numericality: { greater_than: 0 }
-  validates :payer, presence: true
-  validates :participants, presence: true # 取引には相手が必ず1人以上いる必要がある
+  validates :payer,  presence: true
+  validates :group,  presence: true
+  validates :description, length: {maximum: 300}
+
+  private
+
+  def has_participants?
+    unless participants.present?
+      raise ActiveRecord::RecordInvalid, "取引の相手がいません"
+    end
+  end
 end
