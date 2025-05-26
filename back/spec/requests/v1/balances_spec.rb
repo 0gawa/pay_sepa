@@ -2,13 +2,13 @@ require 'rails_helper'
 
 RSpec.describe "V1::Balances", type: :request do
   describe "Indexアクションについて" do
-    context "グループの清算を正しく出力すること" do
-      let(:group) {create(:group)}
-      let(:user1) {create(:user, group: group)}
-      let(:user2) {create(:user, group: group)}
-      let(:user3) {create(:user, group: group)}
-      let(:user4) {create(:user, group: group)}
+    let(:group) {create(:group)}
+    let(:user1) {create(:user, group: group)}
+    let(:user2) {create(:user, group: group)}
+    let(:user3) {create(:user, group: group)}
+    let(:user4) {create(:user, group: group)}
 
+    context "グループの清算を正しく出力すること（割り切れる場合）" do
       it "1対1の清算を正しく出力すること" do
         transaction = create(:transaction, payer: user1, group: group, amount: 1000)
         transaction.participants << user1
@@ -26,7 +26,7 @@ RSpec.describe "V1::Balances", type: :request do
       #   2   :   2, 3, 4   :   1500
       #   3   :   3, 4      :    400
       # answer: 3 to 1: 600, 4 to 2: 700
-      it "すべての取引における割り勘が割り切れるとき1" do
+      it "複数の取引がある場合に正しく清算すること" do
         transaction1 = create(:transaction, payer: user1, group: group, amount: 900)
         transaction1.participants << user1
         transaction1.participants << user2
@@ -44,7 +44,7 @@ RSpec.describe "V1::Balances", type: :request do
         get v1_group_balances_path(group_id: group.id)
         json_response = JSON.parse(response.body)
 
-        puts json_response
+        # puts json_response
         # expected response: payer, receiver, amount
         expect(json_response["settlements"].length).to eq(2)
         expect(json_response["settlements"]).to include(
@@ -52,7 +52,80 @@ RSpec.describe "V1::Balances", type: :request do
             {"payer" => set_jpayer(user4), "receiver" => set_jreceiver(user2), "amount" => 700.0}
           )
       end
-      it "すべての取引における割り勘が割り切れるとき2" do
+      it "一人が複数人から受け取る清算を正しく行うこと" do
+        transaction = create(:transaction, payer: user1, group: group, amount: 1000)
+        transaction.participants << user1
+        transaction.participants << user2
+        transaction.participants << user3
+        transaction.participants << user4
+
+        get v1_group_balances_path(group_id: group.id)
+        json_response = JSON.parse(response.body)
+
+        expect(json_response["settlements"].length).to eq(3)
+        expect(json_response["settlements"]).to include(
+            {"payer" => set_jpayer(user2), "receiver" => set_jreceiver(user1), "amount" => 250.0},
+            {"payer" => set_jpayer(user3), "receiver" => set_jreceiver(user1), "amount" => 250.0},
+            {"payer" => set_jpayer(user4), "receiver" => set_jreceiver(user1), "amount" => 250.0}
+          )
+      end
+      it "複数人が一人のために清算を正しく行うこと" do
+        transaction1 = create(:transaction, payer: user1, group: group, amount: 1000)
+        transaction2 = create(:transaction, payer: user3, group: group, amount: 2000)
+
+        transaction1.participants << user1
+        transaction1.participants << user2
+        transaction2.participants << user3
+        transaction2.participants << user2
+
+        get v1_group_balances_path(group_id: group.id)
+        json_response = JSON.parse(response.body)
+
+        expect(json_response["settlements"].length).to eq(2)
+        expect(json_response["settlements"]).to include(
+            {"payer" => set_jpayer(user2), "receiver" => set_jreceiver(user1), "amount" => 500.0},
+            {"payer" => set_jpayer(user2), "receiver" => set_jreceiver(user3), "amount" => 1000.0},
+          )
+      end
+      # エッジケース
+      it "清算が不要な場合（全員の残高がゼロ）は空の配列を返すこと" do
+        trasaction = create(:transaction, payer: user1, group: group, amount: 1000)
+        transaction.participants << user1
+        get v1_group_balances_path(group_id: group.id)
+        json_response = JSON.parse(response.body)
+        expect(json_response["settlements"]).to eq([])
+      end
+      it "清算が不要な別のケース（帳尻が合っている）は空の配列を返すこと" do
+        transaction1 = create(:transaction, payer: user1, group: group, amount: 1000)
+        transaction1.participants << user1
+        transaction1.participants << user2
+
+        transaction2 = create(:transaction, payer: user2, group: group, amount: 1000)
+        transaction2.participants << user2
+        transaction2.participants << user1
+
+        get v1_group_balances_path(group_id: group.id)
+        json_response = JSON.parse(response.body)
+        expect(json_response["settlements"]).to eq([])
+      end
+      it "単一のユーザーのみが関わる取引の場合に空の配列を返すこと" do
+        transaction = create(:transaction, payer: user1, group: group, amount: 500)
+        transaction.participants << user1
+        get v1_group_balances_path(group_id: group.id)
+        json_response = JSON.parse(response.body)
+        expect(json_response["settlements"]).to eq([])
+      end
+    end
+
+    context "グループの清算を正しく出力すること（割り切れない場合）" do
+      it "小数点以下の金額を含む清算を正しく行うこと" do
+        transaction = create(:transaction, payer: user1, group: group, amount: 1000)
+        transaction.participants << user1
+        transaction.participants << user2
+        transaction.participants << user3
+        get v1_group_balances_path(group_id: group.id)  
+        json_response = JSON.parse(response.body)
+        # TODO: expect
       end
     end
 
@@ -63,7 +136,7 @@ RSpec.describe "V1::Balances", type: :request do
 
     context "その他のエラーが発生したとき" do
     end
-  end
+  end 
 end
 
 # レスポンスのuserに関するjsonをセットするためのヘルパーメソッド
