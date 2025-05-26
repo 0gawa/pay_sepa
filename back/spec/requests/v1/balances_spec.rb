@@ -87,9 +87,37 @@ RSpec.describe "V1::Balances", type: :request do
             {"payer" => set_jpayer(user2), "receiver" => set_jreceiver(user3), "amount" => 1000.0},
           )
       end
+      it "複雑な多数の取引を正しく清算すること" do
+        # 追加のユーザー
+        user5 = create(:user, group: group)
+
+        transaction1 = create(:transaction, payer: user1, group: group, amount: 600)
+        transaction1.participants << user1
+        transaction1.participants << user2
+        transaction1.participants << user3
+        transaction2 = create(:transaction, payer: user4, group: group, amount: 900)
+        transaction2.participants << user1
+        transaction2.participants << user2
+        transaction2.participants << user4
+        transaction3 = create(:transaction, payer: user5, group: group, amount: 1000)
+        transaction3.participants << user3
+        transaction3.participants << user5
+        transaction4 = create(:transaction, payer: user2, group: group, amount: 200)
+        transaction4.participants << user1
+        transaction4.participants << user5
+
+        get v1_group_balances_path(group_id: group.id)
+        json_response = JSON.parse(response.body)
+        expect(json_response["settlements"].length).to eq(3)
+        expect(json_response["settlements"]).to include(
+            {"payer" => set_jpayer(user3), "receiver" => set_jreceiver(user4), "amount" => 600.0},
+            {"payer" => set_jpayer(user3), "receiver" => set_jreceiver(user5), "amount" => 100.0},
+            {"payer" => set_jpayer(user2), "receiver" => set_jreceiver(user5), "amount" => 300.0}
+          )
+      end
       # エッジケース
       it "清算が不要な場合（全員の残高がゼロ）は空の配列を返すこと" do
-        trasaction = create(:transaction, payer: user1, group: group, amount: 1000)
+        transaction = create(:transaction, payer: user1, group: group, amount: 1000)
         transaction.participants << user1
         get v1_group_balances_path(group_id: group.id)
         json_response = JSON.parse(response.body)
@@ -125,12 +153,21 @@ RSpec.describe "V1::Balances", type: :request do
         transaction.participants << user3
         get v1_group_balances_path(group_id: group.id)  
         json_response = JSON.parse(response.body)
-        # TODO: expect
+        # TODO: 小数点以下の処理を変更する
+        expect(json_response["settlements"].length).to eq(2)
+        expect(json_response["settlements"]).to include(
+            {"payer" => set_jpayer(user2), "receiver" => set_jreceiver(user1), "amount" => 333.33},
+            {"payer" => set_jpayer(user3), "receiver" => set_jreceiver(user1), "amount" => 333.33},
+          )
       end
     end
 
     context "グループに取引が存在しないとき" do
       it "not_foundを返すこと" do
+        get v1_group_balances_path(group_id: group.id)
+        expect(response).to have_http_status(:not_found)
+        json_response = JSON.parse(response.body)
+        expect(json_response["message"]).to eq("Transactions not found")
       end
     end
 
