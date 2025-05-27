@@ -5,3 +5,5 @@
 - backend: Rails
 - frontend: React
 - db: postgresql
+
+# 清算方法に関するアルゴリズム
