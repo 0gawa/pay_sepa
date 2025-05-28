@@ -1,4 +1,4 @@
 require 'rails_helper'
 
-RSpec.describe "TransactionParticipationモデルについて", type: :model do
+RSpec.describe "About TransactionParticipation", type: :model do
 end
