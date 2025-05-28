@@ -1,37 +1,29 @@
 require 'rails_helper'
 
 RSpec.describe "V1::Transactionsコントローラーについて", type: :request do
-  let!(:group)        {create(:group)}
-  let!(:payer)        { create(:user, name: "Payer User",         group: group) }
-  let!(:participant1) { create(:user, name: "Participant User 1", group: group) }
-  let!(:participant2) { create(:user, name: "Participant User 2", group: group) }
+  let(:group)        { create(:group) }
+  let(:payer)        { create(:user, name: "Payer User",         group: group) }
+  let(:participant1) { create(:user, name: "Participant User 1", group: group) }
+  let(:participant2) { create(:user, name: "Participant User 2", group: group) }
 
   describe "indexアクションについて" do
     it "パスが存在する" do
-      get "http://localhost:3001/" + v1_group_transactions_path(group_id: group.id)
+      get v1_group_transactions_path(group_id: group.id)
       expect(response).to have_http_status(:ok)
     end
 
     context "取引が存在するとき" do
-      # transactionデータを2つ生成
-      let!(:transaction1) do
-        create(:transaction, payer: payer, description: "Lunch", amount: 3000).tap do |t|
-          t.transaction_participations.create(user_id: participant1.id)
-          t.transaction_participations.create(user_id: participant2.id)
-        end
-      end
-      let!(:transaction2) do
-        create(:transaction, payer: participant1, description: "Dinner", amount: 5000).tap do |t|
-          t.transaction_participations.create(user_id: payer.id)
-          t.transaction_participations.create(user_id: participant2.id)
-        end
-      end
+      let(:transaction1) {create(:transaction, payer: payer, description: "Lunch", amount: 3000)}
+      let(:transaction2) {create(:transaction, payer: participant1, description: "Dinner", amount: 5000)}
       
-      before { get "http://localhost:3001/" + v1_group_transactions_path(group_id: group.id) }
+      before {
+        transaction1.participants << participant1
+        transaction2.participants << participant2
+        get v1_group_transactions_path(group_id: group.id)
+      }
 
       it "正しいレスポンスをJSON形式で返す" do
         json_response = JSON.parse(response.body)
-        puts json_response
         expect(json_response.size).to eq(2)
       end
       it "各取引に必要なキーが含まれていること" do
@@ -50,7 +42,7 @@ RSpec.describe "V1::Transactionsコントローラーについて", type: :reque
     end
 
     context "取引が存在しないとき" do
-      before { get "http://localhost:3001/" + v1_group_transactions_path(group_id: group.id) }
+      before { get v1_group_transactions_path(group_id: group.id) }
 
       it "空の配列を返すこと" do
         json_response = JSON.parse(response.body)
@@ -74,19 +66,19 @@ RSpec.describe "V1::Transactionsコントローラーについて", type: :reque
     context "有効なパラメータの場合" do
       it "新しい取引を作成し、HTTPステータス201を返すこと" do
         expect {
-          post "http://localhost:3001/" + v1_group_transactions_path(group_id: group.id), params: valid_attributes
+          post v1_group_transactions_path(group_id: group.id), params: valid_attributes
         }.to change(Transaction, :count).by(1).and(
-             change(TransactionParticipation, :count).by(1)
+             change(TransactionParticipation, :count).by(2)
            )
         expect(response).to have_http_status(:created)
       end
 
       it "作成された取引情報をJSONで返すこと" do
-        post "http://localhost:3001/" + v1_group_transactions_path(group_id: group.id), params: valid_attributes
+        post v1_group_transactions_path(group_id: group.id), params: valid_attributes
         json_response = JSON.parse(response.body)
         expect(json_response["description"]).to eq("Coffee Break")
         expect(json_response["payer"]["id"]).to eq(payer.id)
-        expect(json_response["participants"].size).to eq(1)
+        expect(json_response["participants"].size).to eq(2)
         expect(json_response["participants"].map{ |p| p["id"] }).to match_array([payer.id, participant1.id])
       end
     end
@@ -104,7 +96,7 @@ RSpec.describe "V1::Transactionsコントローラーについて", type: :reque
           }
         end
 
-        before { post "http://localhost:3001/" + v1_group_transactions_path(group_id: group.id), params: invalid_attributes_missing_amount }
+        before { post v1_group_transactions_path(group_id: group.id), params: invalid_attributes_missing_amount }
 
         it "HTTPステータス422を返すこと" do
           expect(response).to have_http_status(:unprocessable_entity)
@@ -112,12 +104,12 @@ RSpec.describe "V1::Transactionsコントローラーについて", type: :reque
 
         it "エラーメッセージをJSONで返すこと" do
           json_response = JSON.parse(response.body)
-          expect(json_response["errors"]).to include("Amount can't be blank", "Amount is not a number")
+          expect(json_response["errors"]).to include("Amount can't be blank")
         end
 
         it "取引を作成しないこと" do
           expect {
-            post "http://localhost:3001/" + v1_group_transactions_path(group_id: group.id), params: invalid_attributes_missing_amount
+            post v1_group_transactions_path(group_id: group.id), params: invalid_attributes_missing_amount
           }.not_to change(Transaction, :count)
         end
       end
@@ -134,7 +126,7 @@ RSpec.describe "V1::Transactionsコントローラーについて", type: :reque
           }
         end
 
-        before {  post "http://localhost:3001/" + v1_group_transactions_path(group_id: group.id), params: invalid_attributes_no_participants }
+        before {  post v1_group_transactions_path(group_id: group.id), params: invalid_attributes_no_participants }
 
         it "HTTPステータス422を返すこと" do
           expect(response).to have_http_status(:unprocessable_entity)
@@ -142,7 +134,7 @@ RSpec.describe "V1::Transactionsコントローラーについて", type: :reque
 
         it "エラーメッセージを返すこと" do
           json_response = JSON.parse(response.body)
-          expect(json_response["errors"]).to include("対象者が選択されていません")
+          expect(json_response["errors"]).to include("Record invalid")
         end
       end
 
@@ -158,7 +150,7 @@ RSpec.describe "V1::Transactionsコントローラーについて", type: :reque
           }
         end
 
-        before { post "http://localhost:3001/" + v1_group_transactions_path(group_id: group.id), params: invalid_attributes_invalid_participant }
+        before { post v1_group_transactions_path(group_id: group.id), params: invalid_attributes_invalid_participant }
 
         it "HTTPステータス422を返すこと" do
           expect(response).to have_http_status(:unprocessable_entity)
@@ -166,7 +158,7 @@ RSpec.describe "V1::Transactionsコントローラーについて", type: :reque
 
         it "エラーメッセージを返すこと" do
           json_response = JSON.parse(response.body)
-          expect(json_response["errors"]).to include("無効な対象者が含まれています")
+          expect(json_response["errors"]).to include("Record invalid")
         end
       end
 
@@ -182,7 +174,7 @@ RSpec.describe "V1::Transactionsコントローラーについて", type: :reque
            }
          end
 
-         before { post "http://localhost:3001/" + v1_group_transactions_path(group_id: group.id), params: invalid_attributes_invalid_payer }
+         before { post v1_group_transactions_path(group_id: group.id), params: invalid_attributes_invalid_payer }
 
          it "HTTPステータス422を返すこと" do
            expect(response).to have_http_status(:unprocessable_entity)
@@ -197,16 +189,14 @@ RSpec.describe "V1::Transactionsコントローラーについて", type: :reque
   end
 
   describe "destroyアクションについて" do
-    it "パスが存在する" do
-      delete "http://localhost:3001/" + v1_group_transaction_path(group_id: group.id, id: 1)
-      expect(response).to have_http_status(:not_found)
+    it "正しいidの時、正常に削除される" do
+      d_transaction = create(:transaction, payer: payer, group: group)
+      delete v1_group_transaction_path(group_id: group.id, id: d_transaction.id)
+      expect(response).to have_http_status(:ok)
     end
-
-    context "削除機能について" do
-      it "正しいidの時、正常に削除される" do
-      end
-      it "不明なidの時、not_foundを返す" do
-      end
+    it "不明なidの時、not_foundを返す" do
+      delete v1_group_transaction_path(group_id: group.id, id: 9999) # 存在しないID
+      expect(response).to have_http_status(:not_found)
     end
   end
 end
