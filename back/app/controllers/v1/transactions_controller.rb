@@ -1,6 +1,6 @@
 class V1::TransactionsController < ApplicationController
   def index
-    transactions = Transaction.includes(:payer, :participants).order(created_at: :desc)
+    transactions = Transaction.includes(:payer, :participants)
     render json: transactions.as_json(
       include: {
         group: { only: [:id, :name] },
@@ -22,30 +22,29 @@ class V1::TransactionsController < ApplicationController
     transaction.group_id = @group.id
 
     if participant_ids.empty?
-      render json: { errors: ["対象者が選択されていません"] }, status: :unprocessable_entity
+      render json: { errors: "対象者が選択されていません" }, status: :unprocessable_entity
       return
     end
 
     # トランザクション内で参加者も保存
     ActiveRecord::Base.transaction do
+      transaction.save!
       participants = User.where(id: participant_ids)
       if participants.size != participant_ids.size
-        raise ActiveRecord::RecordInvalid, "無効な対象者が含まれています"
+        raise ActiveRecord::RecordInvalid
       end
       transaction.participants = participants
-      transaction.save!
     end
 
     render json: transaction.as_json(include: [:payer, :participants]), status: :created
-
   rescue ActiveRecord::RecordInvalid => e
-    render json: { errors: transaction.errors.full_messages + [e.message] }, status: :unprocessable_entity
+    render json: { errors: e.message }, status: :unprocessable_entity
   end
 
   def destroy
     transaction = Transaction.find(params[:id])
     transaction.destroy
-    head :no_content
+    render json: { message: "Transaction deleted successfully" }, status: :ok
   rescue ActiveRecord::RecordNotFound
     render json: { error: "Transaction not found" }, status: :not_found
   end
@@ -53,7 +52,7 @@ class V1::TransactionsController < ApplicationController
   private
 
   def transaction_params
-    params.require(:transaction).permit(:payer_id, :amount, :description, :participant_ids[])
+    params.require(:transaction).permit(:payer_id, :amount, :description, participant_ids: [])
   end
 
   def set_group
