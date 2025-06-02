@@ -1,16 +1,16 @@
 services:
-  # front:
-  #   build:
-  #     context: ./front
-  #     dockerfile: Dockerfile
-  #   environment:
-  #     TZ: Asia/Tokyo
-  #   volumes:
-  #     - ./front:/app
-  #     - front_node_modules:/app/node_modules
-  #   command: yarn dev -p 3000
-  #   ports:
-  #     - "3000:3000"
+  front:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    environment:
+      TZ: Asia/Tokyo
+    volumes:
+      - ./front:/app
+      - front_node_modules:/app/node_modules
+    command: yarn dev -p 3000
+    ports:
+      - "3000:3000"
   back:
     build:
       context: ./back
