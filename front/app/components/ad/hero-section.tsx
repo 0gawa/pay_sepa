@@ -26,8 +26,8 @@ export default function HeroSection() {
               as="a"
               href="#features"
               className="bg-indigo-700 font-bold py-3 px-8 rounded-full text-lg shadow-lg transition-all duration-300 transform hover:scale-105"
-            >
-              アプリの機能を見る
+            >{/*2つのボタンの文字数を揃えるため、全角空白を挿入*/}
+              機能を見る　
             </Button>
           </div>
         </div>
