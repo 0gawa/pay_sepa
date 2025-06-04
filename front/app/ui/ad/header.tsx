@@ -11,8 +11,9 @@ export default function Header() {
         </Link>
         <nav>
           <ul className="flex space-x-6">
-            <li><Link href="#how-to" className="text-gray-600 hover:text-indigo-600 font-medium rounded-lg px-3 py-2 transition-colors">使い方</Link></li>
-            <li><Link href="#balance" className="text-gray-600 hover:text-indigo-600 font-medium rounded-lg px-3 py-2 transition-colors">清算</Link></li>
+            <li><Link href="#features" className="text-gray-600 hover:text-indigo-600 font-medium rounded-lg px-3 py-2 transition-colors">特徴</Link></li>
+            <li><Link href="#how-it-works" className="text-gray-600 hover:text-indigo-600 font-medium rounded-lg px-3 py-2 transition-colors">使い方</Link></li>
+            <li><Link href="#download" className="text-gray-600 hover:text-indigo-600 font-medium rounded-lg px-3 py-2 transition-colors">始める</Link></li>
           </ul>
         </nav>
       </div>

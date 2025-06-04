@@ -1,4 +1,4 @@
-import Card from './ui/stamp-expression-card';
+import Card from '../../ui/ad/stamp-expression-card';
 
 export default function KeyFeatureSection() {
   return (
