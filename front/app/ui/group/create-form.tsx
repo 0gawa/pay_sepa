@@ -66,6 +66,7 @@ export default function CreateForm() {
         />
 
         <Textarea
+          id="groupDescription"
           label="グループの説明 (任意)"
           value={groupDescription}
           onChange={handleGroupDescriptionChange}
@@ -76,6 +77,7 @@ export default function CreateForm() {
         {members.map((member, index) => (
           <div key={index} className="flex items-center mt-3">
             <Input
+              id={`user${index + 1}`}
               label={`メンバー${index + 1}`}
               labelPlacement="outside"
               value={member}
