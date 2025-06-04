@@ -22,7 +22,7 @@ export default function UseModal({
         <ModalContent>
           {(onClose) => (
             <>
-              <ModalHeader className="">Modal Title</ModalHeader>
+              <ModalHeader className="flex flex-col gap-1">Modal Title</ModalHeader>
               <ModalBody>
                 <p>
                   Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam pulvinar risus non
