@@ -10,15 +10,13 @@ import {
 export default function UseModal({
   isOpen,
   onOpenChange,
-  onClose,
 }: {
   isOpen: boolean;
   onOpenChange: () => void;
-  onClose: () => void;
 }) {
   return (
     <>
-      <Modal isOpen={isOpen} onOpenChange={onOpenChange} onClose={onClose}>
+      <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
         <ModalContent>
           {(onClose) => (
             <>

@@ -7,7 +7,7 @@ import {
 import Modal from "@/app/ui/ad/how-to-use-modal";
 
 export default function Header() {
-  const {isOpen, onOpen, onOpenChange, onClose} = useDisclosure();
+  const {isOpen, onOpen, onOpenChange} = useDisclosure();
 
   return (
     <header className="bg-white shadow-sm py-4">
@@ -17,11 +17,13 @@ export default function Header() {
         </Link>
         <nav>
           <ul className="flex space-x-6">
-            <li><Link href="#" onPress={onOpen} className="text-gray-600 hover:text-indigo-600 font-medium rounded-lg px-3 py-2 transition-colors">使い方</Link></li> 
+            <li>
+              <Link href="#" onPress={onOpen} className="text-gray-600 hover:text-indigo-600 font-medium rounded-lg px-3 py-2 transition-colors">使い方</Link>
+              <Modal isOpen={isOpen} onOpenChange={onOpenChange}/>
+            </li>
             <li><Link href="#balance" className="text-gray-600 hover:text-indigo-600 font-medium rounded-lg px-3 py-2 transition-colors">清算</Link></li>
           </ul>
         </nav>
-        <Modal isOpen={isOpen} onOpenChange={onOpenChange} onClose={onClose}/>
       </div>
     </header>
   );
