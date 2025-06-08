@@ -32,17 +32,29 @@ export default function CreateForm() {
     setMembers(newMembers);
   };
 
-  const handleSubmit = (e:any) => {
+  const handleSubmit = async (e:any) => {
     e.preventDefault(); // デフォルトのフォーム送信を防ぐ
-    // 入力データをコンソールに出力
-    console.log('グループ名:', groupName);
-    console.log('グループ説明:', groupDescription);
-    console.log('メンバー:', members.filter(member => member.trim() !== '')); // 空のメンバーを除外
-    setSubmitMessage('グループが作成されました！'); // 成功メッセージを設定
-    // フォームをリセット
-    setGroupName('');
-    setGroupDescription('');
-    setMembers(['']);
+
+    try{
+      const response = await fetch(`/api/group/create?name=${groupName}&description=${groupDescription}`);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.errors ? errorData.errors.join(', ') : '投稿に失敗しました。');
+      }
+
+      const data = await response.json();
+      setSubmitMessage('グループのURL: https://localhost/group/' + data.group.name);
+      console.log('グループ名:', groupName);
+      console.log('グループ説明:', groupDescription);
+      console.log('メンバー:', members.filter(member => member.trim() !== '')); // 空のメンバーを除外
+    }catch(e: any){
+      setGroupName('');
+      setGroupDescription('');
+      setMembers(['']);
+      console.error("エラーが発生しました")
+      setSubmitMessage('入力が正しいか確認してください');
+    }
   };
 
   return (

@@ -1,3 +1,5 @@
+"use client"
+
 import Header from '@/app/ui/header';
 import Footer from '@/app/ui/footer';
 
