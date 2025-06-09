@@ -106,14 +106,14 @@ export default function CreateForm() {
               labelPlacement="outside"
               value={member}
               onChange={(e) => handleMemberChange(index, e)}
-              className="appearance-none block w-full mt-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="block w-full mt-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               placeholder={`例: 太郎`}
               variant="bordered"
             />
             {members.length > 1 && (
               <Button
                 onPress={() => handleRemoveMember(index)}
-                className="appearance-none text-red-600 hover:text-red-800 rounded-full py-1 focus:outline-none focus:ring-1 focus:ring-red-500 focus:ring-offset-2"
+                className="text-red-600 hover:text-red-800 rounded-full py-1 focus:outline-none focus:ring-1 focus:ring-red-500 focus:ring-offset-2"
                 aria-label="メンバーを削除"
               >
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
