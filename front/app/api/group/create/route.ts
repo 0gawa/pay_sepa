@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 
-export async function Post(req: any){
+export async function POST(req: any){
   try{
     const { searchParams } = new URL(req.url);
     const name        = searchParams.get("name");
     const description = searchParams.get("description");
 
-    const data = await fetch(process.env.API_BASE_URL + "groups", {
+    const response = await fetch(process.env.API_BASE_URL + "groups", {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -20,15 +20,14 @@ export async function Post(req: any){
       })
     });
 
-    if(!data.ok){
-      const errorData = await data.json();
-      throw new Error(errorData.message || `error: ${data.status}`);
+    if(!response.ok){
+      const errorText = await response.text();;
+      throw new Error(errorText || `error: ${response.status}`);
     }
-
-    const post = await data.json();
-    return NextResponse.json(post);
+    
+    return response;
   }catch(error: any){
-    console.error('Error fetching external data:', error);
+    console.error('Error fetching external response:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

@@ -2,12 +2,20 @@
 
 import { useState } from 'react';
 import { Form, Textarea, Input, Button } from '@heroui/react';
+import { useRouter } from 'next/navigation';
+
+interface PostResponse{
+  id: string;
+  name: string;
+  description: string;
+}
 
 export default function CreateForm() {
   const [groupName, setGroupName] = useState('');
   const [groupDescription, setGroupDescription] = useState('');
   const [members, setMembers] = useState(['']);
   const [submitMessage, setSubmitMessage] = useState('');
+  const router = useRouter();
 
   const handleGroupNameChange = (e: any) => {
     setGroupName(e.target.value);
@@ -36,18 +44,22 @@ export default function CreateForm() {
     e.preventDefault(); // デフォルトのフォーム送信を防ぐ
 
     try{
-      const response = await fetch(`/api/group/create?name=${groupName}&description=${groupDescription}`);
+      const response = await fetch(`/api/group/create?name=${groupName}&description=${groupDescription}`, {
+        method: 'POST',
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.errors ? errorData.errors.join(', ') : '投稿に失敗しました。');
       }
 
-      const data = await response.json();
-      setSubmitMessage('グループのURL: https://localhost/group/' + data.group.name);
-      console.log('グループ名:', groupName);
-      console.log('グループ説明:', groupDescription);
+      const data: PostResponse = await response.json();
+      setSubmitMessage('グループのURL:' + process.env.FRONT_GROUP_URL + 'group/' + data.name);
+      console.log('グループ名:', data.name);
+      console.log('グループ説明:',data.description);
       console.log('メンバー:', members.filter(member => member.trim() !== '')); // 空のメンバーを除外
+
+      router.push(`/group/url?id=${data.id}`)
     }catch(e: any){
       setGroupName('');
       setGroupDescription('');
