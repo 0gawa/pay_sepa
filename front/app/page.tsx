@@ -1,4 +1,4 @@
-import Header from './ui/header';
+import Header from './ui/ad/header';
 import HeroSection from './components/ad/hero-section';
 import FeaturesSection from './components/ad/key-feature-section';
 import HowWorkSection from './components/ad/how-work-section';
