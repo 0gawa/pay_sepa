@@ -1,13 +1,19 @@
 "use client";
 
-import {
-  Link,
-  useDisclosure,
-} from "@heroui/react";
+import { Link } from "@heroui/react";
+import { useState } from 'react'
 import Modal from "@/app/ui/ad/how-to-use-modal";
 
 export default function Header() {
-  const {isOpen, onOpen, onOpenChange} = useDisclosure();
+  let [isOpen, setIsOpen] = useState(false)
+
+  function closeModal() {
+    setIsOpen(false)
+  }
+
+  function openModal() {
+    setIsOpen(true)
+  }
 
   return (
     <header className="bg-white shadow-sm py-4">
@@ -18,8 +24,12 @@ export default function Header() {
         <nav>
           <ul className="flex space-x-6">
             <li>
-              <Link href="#" onPress={onOpen} className="text-gray-600 hover:text-indigo-600 font-medium rounded-lg px-3 py-2 transition-colors">使い方</Link>
-              <Modal isOpen={isOpen} onOpenChange={onOpenChange}/>
+              <Link href="#" onPress={openModal} className="text-gray-600 hover:text-indigo-600 font-medium rounded-lg px-3 py-2 transition-colors">使い方</Link>
+              <Modal isOpen={isOpen} onClose={closeModal} title="このアプリの使い方">
+                <div>
+                  <p>hogehoge</p>
+                </div>
+              </Modal>
             </li>
             <li><Link href="#balance" className="text-gray-600 hover:text-indigo-600 font-medium rounded-lg px-3 py-2 transition-colors">清算</Link></li>
           </ul>
