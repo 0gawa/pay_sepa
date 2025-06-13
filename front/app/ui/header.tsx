@@ -2,7 +2,7 @@
 
 import { Link } from "@heroui/react";
 import { useState } from 'react'
-import Modal from "@/app/ui/ad/how-to-use-modal";
+import Modal from "@/app/ui/modal";
 
 export default function Header() {
   let [isOpen, setIsOpen] = useState(false)
@@ -27,7 +27,12 @@ export default function Header() {
               <Link href="#" onPress={openModal} className="text-gray-600 hover:text-indigo-600 font-medium rounded-lg px-3 py-2 transition-colors">使い方</Link>
               <Modal isOpen={isOpen} onClose={closeModal} title="このアプリの使い方">
                 <div>
-                  <p>hogehoge</p>
+                  <h2 className="text-lg">1. 必要な情報をサッと登録</h2>
+                  <p className="mt-2">「誰が」「誰に」「いくら支払ったか」を直感的に入力するだけ。複雑な操作は一切不要です。ランチ代から旅行の費用まで、どんなシーンの支払いも手間なく記録できます。</p>
+                  <h2 className="mt-3 text-lg">2. 面倒な計算はアプリにお任せ</h2>
+                  <p className="mt-2">入力された情報を基に、アプリが自動で<strong>最適な清算方法</strong>を瞬時に算出します。複雑な割り勘や複数人での立て替えも、もう大丈夫。手計算でのミスや手間から解放されます。</p>
+                  <h2 className="mt-3 text-lg">3. 誰が誰にいくら払うか一目瞭然</h2>
+                  <p className="mt-2">清算すべき金額が、「誰が」「誰に」「いくら」支払うべきか、リストで明確に表示されます。アプリの指示に従って支払うだけで、面倒な立て替えの回収も、スマートに完了します。</p>
                 </div>
               </Modal>
             </li>

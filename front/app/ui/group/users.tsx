@@ -4,28 +4,30 @@ import { useState } from 'react';
 import { Button, Form, Input,} from "@heroui/react";
 import Modal from '@/app/ui/group/create-user-modal';
 import { UserGroupIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { Member } from '@/app/type/member';
 
-
-interface Member {
-  id: number;
-  name: string;
-}
-
-interface MemberListProps {
-  members: Member[];
-  onAddMember: (name: string) => void;
-  onDeleteMember: (id: number) => void;
-}
-
-export default function Users({ members, onAddMember, onDeleteMember }: MemberListProps) {
+export default function Users({ groupId, groupMembers }: { groupId: string, groupMembers: Member[] }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [memberName, setMemberName] = useState('');
-  const [submitted, setSubmitted] = useState(null);
+  const [members, setMembers] = useState<Member[]>(groupMembers || []);
 
+  const handleMemberNameChange = (e: any) => {
+    setMemberName(e.target.value);
+  };
+  const onDeleteMember = (id: number) => {
+    setMembers((prev) => prev.filter((member) => member.id !== id));
+  };
+  
+  // TODO: APIを叩いてユーザーを追加する
+  // データを削除すると、idが被ることに注意
   const onSubmit = (e: any) => {
     e.preventDefault();
 
+    const l = members.length;
+    setMembers((prev) => [...prev, {id: l+1, name: memberName}]);
+
     console.log(e.currentTarget);
+    setMemberName('');
     setIsModalOpen(false);
   };
 
@@ -37,7 +39,7 @@ export default function Users({ members, onAddMember, onDeleteMember }: MemberLi
           グループメンバー
         </h3>
         <Button onPress={() => setIsModalOpen(true)} color="primary" className="inline-flex">
-          <PlusIcon className="h-5 w-5 mr-2"/>
+          <PlusIcon className="h-5 w-5"/>
           メンバー追加
         </Button>
       </div>
@@ -63,6 +65,8 @@ export default function Users({ members, onAddMember, onDeleteMember }: MemberLi
             id="memberName"
             label="メンバー名"
             type="text"
+            value={memberName}
+            onChange={handleMemberNameChange}
             placeholder="例: 山田太郎"
             isRequired
           />
