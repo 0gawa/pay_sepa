@@ -65,7 +65,7 @@ export default function Transactions({ groupId, groupMembers }: {groupId: string
       }
       setIsModalOpen(false);
     } else {
-      console.error("入力が無効です。"); // Basic validation feedback
+      console.error("入力が無効です。");
     }
 
     setIsModalOpen(false);
