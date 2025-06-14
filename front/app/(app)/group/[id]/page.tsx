@@ -1,6 +1,6 @@
 import Transactions from '@/app/ui/group/transactions';
 import Users from '@/app/ui/group/users';
-
+// TODO: layoutファイルの作成、useStateでmembersを管理
 export default async function Page(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const id = params.id;
