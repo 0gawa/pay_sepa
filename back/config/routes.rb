@@ -1,7 +1,7 @@
 Rails.application.routes.draw do
   namespace :v1 do
     resources :groups, only: [:show, :create, :destroy] do
-      resources :users,        only: [:create, :destroy]
+      resources :users,        only: [:create, :destroy, :index]
       resources :transactions, only: [:index, :create, :destroy]
       resources :settlements,  only: [:index, :create, :destroy]
       resources :balances,     only: [:index] 
