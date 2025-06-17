@@ -1,6 +1,6 @@
 class V1::UsersController < ApplicationController
   def index
-    group = Group.find(params[;group_id])
+    group = Group.find(params[:group_id])
     render json: group.users.as_json(only: [:id, :name]), status: :ok
   rescue ActiveRecord::RecordNotFound
     render json: { error: "Group not found"}, status: :not_found

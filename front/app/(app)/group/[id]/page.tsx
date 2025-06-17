@@ -2,7 +2,7 @@ import Transactions from '@/app/ui/group/transactions';
 import Users from '@/app/ui/group/users';
 
 interface GetResponse {
-  users: {
+  user: {
     id: number;
     name: string;
   }[];
@@ -11,10 +11,9 @@ interface GetResponse {
 export default async function Page(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const groupId = params.id;
-  // TODO: Fetch group data by id from API
   const fetchGroupMembers = async () => {
     try {
-      const response = await fetch(`/api/group/users?groupId=${groupId}`, {
+      const response = await fetch(`${process.env.FRONT_GROUP_URL}/api/group/users?groupId=${groupId}`, {
         method: 'GET',
       });
 
@@ -24,18 +23,14 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
       }
 
       const data: GetResponse = await response.json();
-      if (data.users.length === 0) {
-        throw new Error('グループにメンバーがいません。');
-      }
 
       console.log(data);
-      return data.users;
+      return data.user;
     }catch (e: any) {
       console.error("エラーが発生しました", e.message);
     }
   }
   const groupMembers = await fetchGroupMembers();
-  //const members = [{ id: 1, name: 'John Doe' }, { id: 2, name: 'Jane Smith' }];
 
   return (
     <>
