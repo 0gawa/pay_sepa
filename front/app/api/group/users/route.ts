@@ -3,9 +3,12 @@ import { NextResponse } from 'next/server';
 
 export const revalidate = 60
 
-export async function Get() {
+export async function Get(req: any) {
   try {
-    const data = await fetch(process.env.API_BASE_URL + "users", {
+    const { searchParams } = new URL(req.url);
+    const groupId = searchParams.get("groupId");
+
+    const data = await fetch(process.env.API_BASE_URL + `groups/${groupId}/users`, {
       headers: {
         'Content-Type': 'application/json',
         //'Authorization': `Bearer ${process.env.EXTERNAL_API_KEY}`,

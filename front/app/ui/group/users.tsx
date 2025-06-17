@@ -6,7 +6,7 @@ import Modal from '@/app/ui/group/create-user-modal';
 import { UserGroupIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { Member } from '@/app/type/member';
 
-export default function Users({ groupId, groupMembers }: { groupId: string, groupMembers: Member[] }) {
+export default function Users({ groupId, groupMembers }: { groupId: string, groupMembers: Member[] | undefined }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [memberName, setMemberName] = useState('');
   const [members, setMembers] = useState<Member[]>(groupMembers || []);
