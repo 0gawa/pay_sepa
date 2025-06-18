@@ -1,6 +1,7 @@
 class V1::TransactionsController < ApplicationController
   def index
-    transactions = Transaction.includes(:payer, :participants)
+    set_group
+    transactions = @group.transaction_data.includes(:payer, :participants)
     render json: transactions.as_json(
       include: {
         group: { only: [:id, :name] },

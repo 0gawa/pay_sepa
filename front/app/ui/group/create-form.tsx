@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Form, Textarea, Input, Button } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 
-interface PostResponse{
+interface PostResponse {
   id: string;
   name: string;
   description: string;
