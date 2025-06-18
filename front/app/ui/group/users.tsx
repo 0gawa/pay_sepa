@@ -6,25 +6,24 @@ import Modal from '@/app/ui/group/create-user-modal';
 import { UserGroupIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { Member } from '@/app/type/member';
 
-export default function Users({ groupId, groupMembers }: { groupId: string, groupMembers: Member[] | undefined }) {
+export default function Users({ groupId, groupMembers, setGroupMembers }: { groupId: string, groupMembers: Member[], setGroupMembers: React.Dispatch<React.SetStateAction<Member[]>>}) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [memberName, setMemberName] = useState('');
-  const [members, setMembers] = useState<Member[]>(groupMembers || []);
 
   const handleMemberNameChange = (e: any) => {
     setMemberName(e.target.value);
   };
   const onDeleteMember = (id: number) => {
-    setMembers((prev) => prev.filter((member) => member.id !== id));
+    setGroupMembers( (prev: Member[]) => prev.filter( member => member.id !== id ) );
   };
   
   // TODO: APIを叩いてユーザーを追加する
-  // データを削除すると、idが被ることに注意
   const onSubmit = (e: any) => {
     e.preventDefault();
 
-    const l = members.length;
-    setMembers((prev) => [...prev, {id: l+1, name: memberName}]);
+    const isMember = groupMembers?.at(-1)?.id;
+    const newMemberId = isMember ? isMember + 1 : 1;
+    setGroupMembers((prev) => [...prev , { id: newMemberId + 1, name: memberName }]);
 
     console.log(e.currentTarget);
     setMemberName('');
@@ -44,11 +43,11 @@ export default function Users({ groupId, groupMembers }: { groupId: string, grou
         </Button>
       </div>
 
-      {members.length === 0 ? (
+      {groupMembers?.length === 0 ? (
         <p className="text-gray-500 text-center py-4">まだメンバーがいません。追加してください。</p>
       ) : (
         <ul className="divide-y divide-gray-200">
-          {members.map((member) => (
+          {groupMembers?.map((member) => (
             <li key={member.id} className="py-3 flex items-center justify-between">
               <span className="text-gray-700">{member.name}</span>
               <Button color="danger" onPress={() => onDeleteMember(member.id)} className="px-3 py-1 text-xs">
