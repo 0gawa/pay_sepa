@@ -1,11 +1,8 @@
-import Transactions from '@/app/ui/group/transactions';
-import Users from '@/app/ui/group/users';
+import { Member }   from '@/app/type/member';
+import GroupMembersClientWrapper from './_components/group-members-client-wrapper'; 
 
 interface GetResponse {
-  user: {
-    id: number;
-    name: string;
-  }[];
+  user: Member[];
 }
 
 export default async function Page(props: { params: Promise<{ id: string }> }) {
@@ -27,22 +24,15 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
       console.log(data);
       return data.user;
     }catch (e: any) {
-      console.error("エラーが発生しました", e.message);
+      console.error("Server Component: データフェッチエラー:", e.message);
+      return [];
     }
   }
-  const groupMembers = await fetchGroupMembers();
+  const groupMembers: Member[] = await fetchGroupMembers();
 
   return (
     <>
-      <div>
-        <Transactions groupId={ groupId } groupMembers={ groupMembers }/>
-      </div>
-      <div className="mt-6">
-        <Users groupId={ groupId } groupMembers={ groupMembers }/>
-      </div>
-      <div>
-
-      </div>
+      <GroupMembersClientWrapper groupId={groupId} initialGroupMembers={groupMembers} />
     </>
   );
 }

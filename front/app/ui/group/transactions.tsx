@@ -8,16 +8,14 @@ import { Member } from '@/app/type/member';
 import { Transaction } from '@/app/type/transaction';
 import SelectInput from '@/app/ui/form/select-input';
 
-export default function Transactions({ groupId, groupMembers }: {groupId: string, groupMembers: Member[] | undefined }) {
+export default function Transactions({ groupId, groupMembers, setGroupMembers }: {groupId: string, groupMembers: Member[], setGroupMembers: React.Dispatch<React.SetStateAction<Member[]>> }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [enabled, setEnabled] = useState(true)
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [message, setMessage] = useState('');
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState<number | ''>();
   const [paidBy, setPaidBy] = useState<number | ''>();
   const [participants, setParticipants] = useState<number[]>([]);
-  const [members, setMembers] = useState<Member[]>(groupMembers || []);
 
   const removeTransaction = (id: number) => {
     setTransactions(transactions.filter(tx => tx.id !== id));
@@ -32,9 +30,10 @@ export default function Transactions({ groupId, groupMembers }: {groupId: string
     }
   };
   const onAddTransaction = (transaction: any) => {
-    const l = transactions.length
+    const isMember = groupMembers.at(-1)?.id;
+    const newMemberId = isMember ? isMember + 1 : 1;
     const data = {
-      id: l+1,
+      id: newMemberId + 1,
       description: transaction.description,
       amount: transaction.amount,
       payer: transaction.paidBy,
@@ -56,9 +55,9 @@ export default function Transactions({ groupId, groupMembers }: {groupId: string
       setDescription('');
       setAmount('');
       // Reset paidBy and participants to default after submission
-      if (members.length > 0) {
-        setPaidBy(members[0].id);
-        setParticipants(members.map(m => m.id));
+      if (groupMembers.length > 0) {
+        setPaidBy(groupMembers[0].id);
+        setParticipants(groupMembers.map(m => m.id));
       } else {
         setPaidBy('');
         setParticipants([]);
@@ -126,21 +125,30 @@ export default function Transactions({ groupId, groupMembers }: {groupId: string
             min="1"
             isRequired
           />
-          <SelectInput
-            id="paidBy"
-            label="支払者"
-            options={members}
-            value={paidBy}
-            onChange={(e: any) => setPaidBy(e.target.value)}
-            required
-          />
+          <div className="mt-4">
+            {groupMembers.length === 0 ? (
+              <>
+                <label className="block text-sm font-medium text-gray-700 mb-1">支払者</label>
+                <p className="text-red-500 text-sm">まずメンバーを追加してください。</p>
+              </>
+            ) : (
+              <SelectInput
+                id="transactionPaidBy"
+                label="支払者"
+                options={groupMembers}
+                value={paidBy}
+                onChange={(e: any) => setPaidBy(e.target.value)}
+                required
+              />
+            )}
+          </div>
           <div className="mt-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">参加者</label>
-            {members.length === 0 ? (
+            {groupMembers.length === 0 ? (
               <p className="text-red-500 text-sm">まずメンバーを追加してください。</p>
             ) : (
               <div className="grid grid-cols-2 gap-2">
-                {members.map(member => (
+                {groupMembers?.map(member => (
                   <div key={member.id} className="flex items-center">
                     <input
                       type="checkbox"
@@ -161,7 +169,7 @@ export default function Transactions({ groupId, groupMembers }: {groupId: string
             <Button type="button" color="secondary" onPress={() => setIsModalOpen(false)}>
               キャンセル
             </Button>
-            <Button type="submit" disabled={members.length === 0 || participants.length === 0}>
+            <Button type="submit" disabled={groupMembers.length === 0 || participants.length === 0}>
               追加
             </Button>
           </div>
