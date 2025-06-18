@@ -8,7 +8,7 @@ import { Member } from '@/app/type/member';
 import { Transaction } from '@/app/type/transaction';
 import SelectInput from '@/app/ui/form/select-input';
 
-export default function Transactions({ groupId, groupMembers, setGroupMembers }: {groupId: string, groupMembers: Member[], setGroupMembers: React.Dispatch<React.SetStateAction<Member[]>> }) {
+export default function Transactions({ groupId, groupMembers = [], setGroupMembers }: {groupId: string, groupMembers: Member[], setGroupMembers: React.Dispatch<React.SetStateAction<Member[]>> }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [message, setMessage] = useState('');

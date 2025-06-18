@@ -21,7 +21,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
 
       const data: GetResponse = await response.json();
 
-      console.log(data);
+      console.log('UserIndex Response: ', data);
       return data.user;
     }catch (e: any) {
       console.error("Server Component: データフェッチエラー:", e.message);
