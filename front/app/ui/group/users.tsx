@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { Button, Form, Input,} from "@heroui/react";
 import Modal from '@/app/ui/group/create-user-modal';
 import { UserGroupIcon, PlusIcon } from '@heroicons/react/24/outline';
-import { Member, GetResponse } from '@/app/type/member';
+import { Member, GetResponse } from '@/lib/types/member';
 
-export default function Users({ groupId, groupMembers, setGroupMembers }: { groupId: string, groupMembers: Member[], setGroupMembers: React.Dispatch<React.SetStateAction<Member[]>>}) {
+export default function Users({ groupId, groupMembers = [], setGroupMembers }: { groupId: string, groupMembers: Member[], setGroupMembers: React.Dispatch<React.SetStateAction<Member[]>>}) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [memberName, setMemberName] = useState('');
 
@@ -47,7 +47,7 @@ export default function Users({ groupId, groupMembers, setGroupMembers }: { grou
       }
     }
   }
-  // TODO: APIを叩いてユーザーを追加する
+
   const onSubmit = async (e: any) => {
     e.preventDefault();
 

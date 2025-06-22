@@ -1,7 +1,8 @@
-import { Member }   from '@/app/type/member';
+import { Member }   from '@/lib/types/member';
+import { Transaction, GetResponse } from '@/lib/types/transaction';
 import GroupMembersClientWrapper from './_components/group-members-client-wrapper'; 
 
-interface GetResponse {
+interface GetMemberResponse {
   user: Member[];
 }
 
@@ -19,7 +20,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
         throw new Error(errorData.errors ? errorData.errors.join(', ') : '取得に失敗しました。');
       }
 
-      const data: GetResponse = await response.json();
+      const data: GetMemberResponse = await response.json();
 
       console.log('UserIndex Response: ', data);
       return data.user;
@@ -28,11 +29,36 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
       return [];
     }
   }
+  const fetchGroupTransactions = async () => {
+    try {
+      const response = await fetch(`${process.env.FRONT_GROUP_URL}/api/group/transactions?groupId=${groupId}`, {
+        method: 'GET',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch group members');
+      }
+      
+      const data: GetResponse[] = await response.json();
+      const newTransactions: Transaction[] = data.map(tx => ({
+        id: tx.id,
+        description: tx.description,
+        amount: tx.amount,
+        payer: tx.payer.id,
+        participants: tx.participants.map(p => p.id),
+      }));
+      return newTransactions;
+    } catch (e: any) {
+      console.error("Server Component: データフェッチエラー:", e.message);
+      return [];
+    }
+  }
   const groupMembers: Member[] = await fetchGroupMembers();
-
+  const groupTransactions: Transaction[] = await fetchGroupTransactions();
+  
   return (
     <>
-      <GroupMembersClientWrapper groupId={groupId} initialGroupMembers={groupMembers} />
+      <GroupMembersClientWrapper groupId={groupId} initialGroupMembers={groupMembers} initialGroupTransactions={groupTransactions} />
     </>
   );
 }
