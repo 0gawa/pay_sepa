@@ -4,69 +4,107 @@ import Modal from '@/app/ui/modal';
 import { useState } from 'react';
 import { CurrencyYenIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { Form, Textarea, Input, Button } from '@heroui/react';
-import { Member } from '@/app/type/member';
-import { Transaction } from '@/app/type/transaction';
+import { Member } from '@/lib/types/member';
+import { GetResponse } from '@/lib/types/transaction';
+import { Transaction } from '@/lib/types/transaction';
 import SelectInput from '@/app/ui/form/select-input';
 
-export default function Transactions({ groupId, groupMembers, setGroupMembers }: {groupId: string, groupMembers: Member[], setGroupMembers: React.Dispatch<React.SetStateAction<Member[]>> }) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [message, setMessage] = useState('');
-  const [description, setDescription] = useState('');
-  const [amount, setAmount] = useState<number | ''>();
-  const [paidBy, setPaidBy] = useState<number | ''>();
-  const [participants, setParticipants] = useState<number[]>([]);
+interface TransactionProps {
+  groupId: string,
+  groupMembers: Member[],
+  groupTransactions: Transaction[],
+  setGroupTransactions: React.Dispatch<React.SetStateAction<Transaction[]>>
+}
 
+export default function Transactions({ groupId, groupMembers=[], groupTransactions=[], setGroupTransactions }: TransactionProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [message, setMessage] = useState<string>('');
+  const [description, setDescription] = useState<string>('');
+  const [amount, setAmount] = useState<number>(0);
+  // TODO: 支払者の変数名をAPIと同一表記にする
+  const [payerId, setPayerId] = useState<number>();
+  const [participants, setParticipants] = useState<Member[]>([]);
+  
   const removeTransaction = (id: number) => {
-    setTransactions(transactions.filter(tx => tx.id !== id));
+    setGroupTransactions(groupTransactions.filter(tx => tx.id !== id));
     setMessage('取引が削除されました。');
     setTimeout(() => setMessage(''), 3000);
   };
-  const handleParticipantChange = (memberId: number, isChecked: boolean) => {
+  const handleParticipantChange = (member: Member, isChecked: boolean) => {
     if (isChecked) {
-      setParticipants(prev => [...prev, memberId]);
-    } else {
-      setParticipants(prev => prev.filter(id => id !== memberId));
+      setParticipants(prev => [...prev, member]);
+    }else {
+      setParticipants(prev => prev.filter(m => m !== member));
     }
   };
-  const onAddTransaction = (transaction: any) => {
-    const isMember = groupMembers.at(-1)?.id;
-    const newMemberId = isMember ? isMember + 1 : 1;
-    const data = {
-      id: newMemberId + 1,
-      description: transaction.description,
-      amount: transaction.amount,
-      payer: transaction.paidBy,
-      participants: transaction.participants,
-    }
-    setTransactions(prev => [...prev, data]);
-  }
+  const fetchTransactions = async () => {
+    const maxRetries: number = 3;
+    const delayMs: number = 1000;
+    let attempts: number = 0;
+    while (attempts < maxRetries) {
+      attempts++;
+      console.log(`Fetching TransactionIndex (Attempt ${attempts} of ${maxRetries})`);
+      try {
+        const response = await fetch(`/api/group/transactions?groupId=${groupId}`, {
+          method: 'GET',
+        });
   
-  const onSubmit = (e: any) => {
+        if (!response.ok) {
+          throw new Error('Failed to fetch group members');
+        }
+  
+        const data: GetResponse[] = await response.json();
+        const newTransactions: Transaction[] = data.map(tx => ({
+          id: tx.id,
+          description: tx.description,
+          amount: tx.amount,
+          payer: tx.payer.id,
+          participants: tx.participants.map(p => p.id),
+        }));
+        setGroupTransactions(newTransactions);
+      } catch (error: any) {
+        console.warn(`Fetch encountered an error: ${error.message}.`);
+        if (attempts < maxRetries) {
+          console.warn(`Retrying in ${delayMs}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+        } else {
+          console.error(`Fetch definitively failed after ${attempts} attempts.`);
+          throw error;
+        }
+      }
+    }
+  }
+  const onSubmit = async (e: any) => {
     e.preventDefault();
 
-    if (description.trim() && amount && amount > 0 && paidBy && participants.length > 0) {
-      onAddTransaction({
-        description: description.trim(),
-        amount: Number(amount),
-        paidBy,
-        participants,
-      });
-      setDescription('');
-      setAmount('');
-      // Reset paidBy and participants to default after submission
-      if (groupMembers.length > 0) {
-        setPaidBy(groupMembers[0].id);
-        setParticipants(groupMembers.map(m => m.id));
-      } else {
-        setPaidBy('');
-        setParticipants([]);
-      }
+    if( !(amount > 0 && payerId && participants.length > 0) ) {
+      payerId? console.log(""): console.error(payerId);
+      participants.length > 0 ? console.log(""):console.error("participants");
       setIsModalOpen(false);
-    } else {
-      console.error("入力が無効です。");
+      return;
     }
 
+    try {
+      const participantsIds: number[] = participants.map(p => p.id);
+      const response = await fetch(`/api/group/transactions/create?groupId=${groupId}&amount=${amount}&description=${description}&paidById=${payerId}&participants=${participantsIds}`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.errors ? errorData.errors.join(', ') : '登録に失敗しました。');
+      }
+
+      // Reset paidBy and participants to default after submission
+      setPayerId(groupMembers[0].id);
+      setParticipants(groupMembers);
+    }catch (e: any) {
+      console.error('Error adding member:', e);
+    }
+
+    setDescription('');
+    setAmount(0);
+    fetchTransactions();
     setIsModalOpen(false);
   };
 
@@ -81,11 +119,11 @@ export default function Transactions({ groupId, groupMembers, setGroupMembers }:
           取引を追加
         </Button>
       </div>
-      {transactions.length === 0 ? (
+      {groupTransactions.length === 0 ? (
         <p className="text-gray-600 text-center py-4">まだ取引がありません。</p>
       ) : (
         <div className="space-y-4">
-          {transactions.map((tx: Transaction) => (
+          {groupTransactions.map((tx: Transaction) => (
             <div key={tx.id} className="bg-white p-4 rounded-lg shadow-sm border border-purple-200 flex justify-between items-center">
               <div>
                 <p className="text-lg font-semibold text-gray-800">
@@ -133,11 +171,10 @@ export default function Transactions({ groupId, groupMembers, setGroupMembers }:
               </>
             ) : (
               <SelectInput
-                id="transactionPaidBy"
+                id="transactionPayerBy"
                 label="支払者"
                 options={groupMembers}
-                value={paidBy}
-                onChange={(e: any) => setPaidBy(e.target.value)}
+                onChange={(e) => setPayerId(e.target.value ? Number(e.target.value) : undefined)}
                 required
               />
             )}
@@ -153,8 +190,8 @@ export default function Transactions({ groupId, groupMembers, setGroupMembers }:
                     <input
                       type="checkbox"
                       id={`participant-${member.id}`}
-                      checked={participants.includes(member.id)}
-                      onChange={(e) => handleParticipantChange(member.id, e.target.checked)}
+                      checked={participants.includes(member)}
+                      onChange={(e) => handleParticipantChange(member, e.target.checked)}
                       className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
                     />
                     <label htmlFor={`participant-${member.id}`} className="ml-2 text-sm text-gray-700">

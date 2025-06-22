@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { Button, Form, Input,} from "@heroui/react";
 import Modal from '@/app/ui/group/create-user-modal';
 import { UserGroupIcon, PlusIcon } from '@heroicons/react/24/outline';
-import { Member } from '@/app/type/member';
+import { Member, GetResponse } from '@/lib/types/member';
 
-export default function Users({ groupId, groupMembers, setGroupMembers }: { groupId: string, groupMembers: Member[], setGroupMembers: React.Dispatch<React.SetStateAction<Member[]>>}) {
+export default function Users({ groupId, groupMembers = [], setGroupMembers }: { groupId: string, groupMembers: Member[], setGroupMembers: React.Dispatch<React.SetStateAction<Member[]>>}) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [memberName, setMemberName] = useState('');
 
@@ -16,16 +16,58 @@ export default function Users({ groupId, groupMembers, setGroupMembers }: { grou
   const onDeleteMember = (id: number) => {
     setGroupMembers( (prev: Member[]) => prev.filter( member => member.id !== id ) );
   };
-  
-  // TODO: APIを叩いてユーザーを追加する
-  const onSubmit = (e: any) => {
+
+  const fetchGroupMembers = async () => {
+    const maxRetries: number = 3;
+    const delayMs: number = 1000;
+    let attempts: number = 0;
+    while (attempts < maxRetries) {
+      attempts++;
+      console.log(`Fetching UserIndex (Attempt ${attempts} of ${maxRetries})`);
+      try {
+        const response = await fetch(`/api/group/users?groupId=${groupId}`, {
+          method: 'GET',
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch group members');
+        }
+
+        const data: GetResponse = await response.json();
+        setGroupMembers(data.user);
+      } catch (error: any) {
+        console.warn(`Fetch encountered an error: ${error.message}.`);
+        if (attempts < maxRetries) {
+          console.warn(`Retrying in ${delayMs}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+        } else {
+          console.error(`Fetch definitively failed after ${attempts} attempts.`);
+          throw error;
+        }
+      }
+    }
+  }
+
+  const onSubmit = async (e: any) => {
     e.preventDefault();
 
-    const isMember = groupMembers?.at(-1)?.id;
-    const newMemberId = isMember ? isMember + 1 : 1;
-    setGroupMembers((prev) => [...prev , { id: newMemberId + 1, name: memberName }]);
+    try {
+      const response = await fetch(`/api/group/users/create?groupId=${groupId}&name=${memberName}`, {
+        method: 'POST',
+      });
 
-    console.log(e.currentTarget);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.errors ? errorData.errors.join(', ') : '登録に失敗しました。');
+      }
+    }catch (e: any) {
+      console.error('Error adding member:', e);
+      return [];
+    }
+    // fetch and set group members
+    fetchGroupMembers();
+
+    console.log('GroupMembers: ' + groupMembers);
     setMemberName('');
     setIsModalOpen(false);
   };

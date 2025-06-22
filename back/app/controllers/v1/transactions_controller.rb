@@ -4,11 +4,10 @@ class V1::TransactionsController < ApplicationController
     transactions = @group.transaction_data.includes(:payer, :participants)
     render json: transactions.as_json(
       include: {
-        group: { only: [:id, :name] },
+        group: { only: [:id] },
         payer: { only: [:id, :name] },
         participants: { only: [:id, :name] }
       },
-      methods: [], # 必要に応じて仮想属性を追加
       only: [:id, :date, :amount, :description, :payer_id]
     )
   end
