@@ -24,7 +24,6 @@ export default function Transactions({ groupId, groupMembers=[], groupTransactio
   const [message, setMessage] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [amount, setAmount] = useState<number>(0);
-  // TODO: 支払者の変数名をAPIと同一表記にする
   const [payerId, setPayerId] = useState<number>();
   const [participants, setParticipants] = useState<Member[]>([]);
   
@@ -65,6 +64,7 @@ export default function Transactions({ groupId, groupMembers=[], groupTransactio
           participants: tx.participants.map(p => p.id),
         }));
         setGroupTransactions(newTransactions);
+        break;
       } catch (error: any) {
         console.warn(`Fetch encountered an error: ${error.message}.`);
         if (attempts < maxRetries) {
@@ -88,7 +88,7 @@ export default function Transactions({ groupId, groupMembers=[], groupTransactio
 
     try {
       const participantsIds: number[] = participants.map(p => p.id);
-      const response = await fetch(`/api/group/transactions/create?groupId=${groupId}&amount=${amount}&description=${description}&paidById=${payerId}&participants=${participantsIds}`, {
+      const response = await fetch(`/api/group/transactions/create?groupId=${groupId}&amount=${amount}&description=${description}&payerId=${payerId}&participants=${participantsIds}`, {
         method: 'POST',
       });
 
@@ -97,10 +97,11 @@ export default function Transactions({ groupId, groupMembers=[], groupTransactio
         throw new Error(errorData.errors ? errorData.errors.join(', ') : '登録に失敗しました。');
       }
 
-      // Reset paidBy and participants to default after submission
+      // Reset payerId and participants to default after submission
       setPayerId(groupMembers[0].id);
       setParticipants(groupMembers);
     }catch (e: any) {
+      setMessage('登録に失敗しました。再度、登録を試みてください')
       console.error('Error adding member:', e);
     }
 
@@ -159,7 +160,6 @@ export default function Transactions({ groupId, groupMembers=[], groupTransactio
             <Textarea
               id="transactionDescription"
               label="内容"
-              value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="例: 食費"
               required

@@ -4,9 +4,9 @@ export async function POST(req: any){
   try{
     const { searchParams } = new URL(req.url);
     const groupId          = searchParams.get("groupId");
-    const amount           = searchParams.get("description");
+    const amount           = searchParams.get("amount");
     const description      = searchParams.get("description");
-    const payerId          = searchParams.get("paidById");
+    const payerId          = searchParams.get("payerId");
     const stringArrayParticipantIds = searchParams.get("participants")?.split(',');;
 
     const participantIds: number[] | undefined = stringArrayParticipantIds?.map(Number);
