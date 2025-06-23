@@ -6,7 +6,7 @@ interface SelectInputProps extends React.SelectHTMLAttributes<HTMLSelectElement>
 
 export default function SelectInput({ id, label, options, className = '', ...props }: SelectInputProps) {
   return (
-    <div className="mb-4">
+    <div className="mb-4 w-full">
       <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">
         {label}
       </label>

@@ -57,8 +57,8 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
   const groupTransactions: Transaction[] = await fetchGroupTransactions();
   
   return (
-    <>
+    <div className="min-h-screen justify-center p-4 sm:p-6 lg:p-8">
       <GroupMembersClientWrapper groupId={groupId} initialGroupMembers={groupMembers} initialGroupTransactions={groupTransactions} />
-    </>
+    </div>
   );
 }

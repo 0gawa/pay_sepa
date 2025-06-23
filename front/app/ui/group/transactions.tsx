@@ -3,11 +3,14 @@
 import Modal from '@/app/ui/modal';
 import { useState } from 'react';
 import { CurrencyYenIcon, PlusIcon } from '@heroicons/react/24/outline';
-import { Form, Textarea, Input, Button } from '@heroui/react';
+import { Form } from '@heroui/react';
 import { Member } from '@/lib/types/member';
 import { GetResponse } from '@/lib/types/transaction';
 import { Transaction } from '@/lib/types/transaction';
 import SelectInput from '@/app/ui/form/select-input';
+import NumberInput from '@/app/ui/form/number-input';
+import Textarea from '@/app/ui/form/textarea-input';
+import Button from '@/app/ui/button';
 
 interface TransactionProps {
   groupId: string,
@@ -21,7 +24,6 @@ export default function Transactions({ groupId, groupMembers=[], groupTransactio
   const [message, setMessage] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [amount, setAmount] = useState<number>(0);
-  // TODO: 支払者の変数名をAPIと同一表記にする
   const [payerId, setPayerId] = useState<number>();
   const [participants, setParticipants] = useState<Member[]>([]);
   
@@ -62,6 +64,7 @@ export default function Transactions({ groupId, groupMembers=[], groupTransactio
           participants: tx.participants.map(p => p.id),
         }));
         setGroupTransactions(newTransactions);
+        break;
       } catch (error: any) {
         console.warn(`Fetch encountered an error: ${error.message}.`);
         if (attempts < maxRetries) {
@@ -78,15 +81,14 @@ export default function Transactions({ groupId, groupMembers=[], groupTransactio
     e.preventDefault();
 
     if( !(amount > 0 && payerId && participants.length > 0) ) {
-      payerId? console.log(""): console.error(payerId);
-      participants.length > 0 ? console.log(""):console.error("participants");
-      setIsModalOpen(false);
+      amount <= 0 ? setMessage("金額は1円以上を入力してください。") : setMessage("");
+      participants.length <= 0 ? setMessage("取引の参加者を選択してください") : setMessage("");
       return;
     }
 
     try {
       const participantsIds: number[] = participants.map(p => p.id);
-      const response = await fetch(`/api/group/transactions/create?groupId=${groupId}&amount=${amount}&description=${description}&paidById=${payerId}&participants=${participantsIds}`, {
+      const response = await fetch(`/api/group/transactions/create?groupId=${groupId}&amount=${amount}&description=${description}&payerId=${payerId}&participants=${participantsIds}`, {
         method: 'POST',
       });
 
@@ -95,15 +97,18 @@ export default function Transactions({ groupId, groupMembers=[], groupTransactio
         throw new Error(errorData.errors ? errorData.errors.join(', ') : '登録に失敗しました。');
       }
 
-      // Reset paidBy and participants to default after submission
+      // Reset payerId and participants to default after submission
       setPayerId(groupMembers[0].id);
       setParticipants(groupMembers);
     }catch (e: any) {
+      setMessage('登録に失敗しました。再度、登録を試みてください')
       console.error('Error adding member:', e);
     }
 
+    setMessage('');
     setDescription('');
     setAmount(0);
+    setParticipants([]);
     fetchTransactions();
     setIsModalOpen(false);
   };
@@ -114,7 +119,7 @@ export default function Transactions({ groupId, groupMembers=[], groupTransactio
         <h3 className="text-xl font-semibold text-gray-800 flex items-center">
           <CurrencyYenIcon className="h-6 w-6 mr-2 text-blue-500" /> 取引一覧
         </h3>
-        <Button onPress={() => setIsModalOpen(true)} color="primary" className="inline-flex">
+        <Button onClick={() => setIsModalOpen(true)} color="primary" className="inline-flex">
           <PlusIcon className="h-5 w-5"/>
           取引を追加
         </Button>
@@ -145,70 +150,75 @@ export default function Transactions({ groupId, groupMembers=[], groupTransactio
         </div>
       )}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="新しい取引を追加">
-        <Form className="w-full max-w-xs" onSubmit={ onSubmit }>
-          <Textarea
-            id="transactionDescription"
-            label="内容"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="例: 食費"
-            isRequired
-          />
-          <Input
-            id="transactionAmount"
-            label="金額 (円)"
-            type="number"
-            onChange={(e) => setAmount(Number(e.target.value))}
-            placeholder="例: 3000"
-            min="1"
-            isRequired
-          />
-          <div className="mt-4">
-            {groupMembers.length === 0 ? (
-              <>
-                <label className="block text-sm font-medium text-gray-700 mb-1">支払者</label>
+        <Form className="flex flex-col items-center justify-center" onSubmit={ onSubmit }>
+          {message && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 text-center" role="alert">
+              <span className="block sm:inline">{message}</span>
+            </div>
+          )}
+          <div className="w-full">
+            <Textarea
+              id="transactionDescription"
+              label="内容"
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="例: 食費"
+              required
+            />
+            <NumberInput
+              id="transactionAmount"
+              label="金額 (円)"
+              onChange={(e) => setAmount(Number(e.target.value))}
+              placeholder="例: 3000"
+              min="1"
+              required
+            />
+            <div className="mt-4 w-full">
+              {groupMembers.length === 0 ? (
+                <>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">支払者</label>
+                  <p className="text-red-500 text-sm">まずメンバーを追加してください。</p>
+                </>
+              ) : (
+                <SelectInput
+                  id="transactionPayerBy"
+                  label="支払者"
+                  options={groupMembers}
+                  onChange={(e) => setPayerId(e.target.value ? Number(e.target.value) : undefined)}
+                  required
+                />
+              )}
+            </div>
+            <div className="mt-4 w-full">
+              <label className="block text-sm font-medium text-gray-700 mb-1">参加者</label>
+              {groupMembers.length === 0 ? (
                 <p className="text-red-500 text-sm">まずメンバーを追加してください。</p>
-              </>
-            ) : (
-              <SelectInput
-                id="transactionPayerBy"
-                label="支払者"
-                options={groupMembers}
-                onChange={(e) => setPayerId(e.target.value ? Number(e.target.value) : undefined)}
-                required
-              />
-            )}
-          </div>
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">参加者</label>
-            {groupMembers.length === 0 ? (
-              <p className="text-red-500 text-sm">まずメンバーを追加してください。</p>
-            ) : (
-              <div className="grid grid-cols-2 gap-2">
-                {groupMembers?.map(member => (
-                  <div key={member.id} className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id={`participant-${member.id}`}
-                      checked={participants.includes(member)}
-                      onChange={(e) => handleParticipantChange(member, e.target.checked)}
-                      className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
-                    />
-                    <label htmlFor={`participant-${member.id}`} className="ml-2 text-sm text-gray-700">
-                      {member.name}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          <div className="mt-6 flex justify-end gap-x-3">
-            <Button type="button" color="secondary" onPress={() => setIsModalOpen(false)}>
-              キャンセル
-            </Button>
-            <Button type="submit" disabled={groupMembers.length === 0 || participants.length === 0}>
-              追加
-            </Button>
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  {groupMembers?.map(member => (
+                    <div key={member.id} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id={`participant-${member.id}`}
+                        checked={participants.includes(member)}
+                        onChange={(e) => handleParticipantChange(member, e.target.checked)}
+                        className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor={`participant-${member.id}`} className="ml-2 text-sm text-gray-700">
+                        {member.name}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="mt-6 w-full flex justify-center gap-x-6">
+              <Button type="button" color="secondary" onClick={() => setIsModalOpen(false)}>
+                キャンセル
+              </Button>
+              <Button type="submit" data-disabled={groupMembers.length === 0}>
+                追加
+              </Button>
+            </div>
           </div>
         </Form>
       </Modal>
