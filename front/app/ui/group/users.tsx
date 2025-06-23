@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { Button, Form, Input,} from "@heroui/react";
+import { Form } from "@heroui/react";
 import Modal from '@/app/ui/group/create-user-modal';
 import { UserGroupIcon, PlusIcon } from '@heroicons/react/24/outline';
-import { Member } from '@/app/type/member';
+import { Member, GetResponse } from '@/lib/types/member';
+import Button from '@/app/ui/button';
+import Input from '@/app/ui/form/text-input';
 
-export default function Users({ groupId, groupMembers, setGroupMembers }: { groupId: string, groupMembers: Member[], setGroupMembers: React.Dispatch<React.SetStateAction<Member[]>>}) {
+export default function Users({ groupId, groupMembers = [], setGroupMembers }: { groupId: string, groupMembers: Member[], setGroupMembers: React.Dispatch<React.SetStateAction<Member[]>>}) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [memberName, setMemberName] = useState('');
 
@@ -16,16 +18,58 @@ export default function Users({ groupId, groupMembers, setGroupMembers }: { grou
   const onDeleteMember = (id: number) => {
     setGroupMembers( (prev: Member[]) => prev.filter( member => member.id !== id ) );
   };
-  
-  // TODO: APIを叩いてユーザーを追加する
-  const onSubmit = (e: any) => {
+
+  const fetchGroupMembers = async () => {
+    const maxRetries: number = 3;
+    const delayMs: number = 1000;
+    let attempts: number = 0;
+    while (attempts < maxRetries) {
+      attempts++;
+      console.log(`Fetching UserIndex (Attempt ${attempts} of ${maxRetries})`);
+      try {
+        const response = await fetch(`/api/group/users?groupId=${groupId}`, {
+          method: 'GET',
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch group members');
+        }
+
+        const data: GetResponse = await response.json();
+        setGroupMembers(data.user);
+      } catch (error: any) {
+        console.warn(`Fetch encountered an error: ${error.message}.`);
+        if (attempts < maxRetries) {
+          console.warn(`Retrying in ${delayMs}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+        } else {
+          console.error(`Fetch definitively failed after ${attempts} attempts.`);
+          throw error;
+        }
+      }
+    }
+  }
+
+  const onSubmit = async (e: any) => {
     e.preventDefault();
 
-    const isMember = groupMembers?.at(-1)?.id;
-    const newMemberId = isMember ? isMember + 1 : 1;
-    setGroupMembers((prev) => [...prev , { id: newMemberId + 1, name: memberName }]);
+    try {
+      const response = await fetch(`/api/group/users/create?groupId=${groupId}&name=${memberName}`, {
+        method: 'POST',
+      });
 
-    console.log(e.currentTarget);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.errors ? errorData.errors.join(', ') : '登録に失敗しました。');
+      }
+    }catch (e: any) {
+      console.error('Error adding member:', e);
+      return [];
+    }
+    // fetch and set group members
+    fetchGroupMembers();
+
+    console.log('GroupMembers: ' + groupMembers);
     setMemberName('');
     setIsModalOpen(false);
   };
@@ -37,7 +81,7 @@ export default function Users({ groupId, groupMembers, setGroupMembers }: { grou
           <UserGroupIcon className="h-6 w-6 mr-2 text-blue-500" />
           グループメンバー
         </h3>
-        <Button onPress={() => setIsModalOpen(true)} color="primary" className="inline-flex">
+        <Button onClick={() => setIsModalOpen(true)} color="primary" className="inline-flex">
           <PlusIcon className="h-5 w-5"/>
           メンバー追加
         </Button>
@@ -50,7 +94,7 @@ export default function Users({ groupId, groupMembers, setGroupMembers }: { grou
           {groupMembers?.map((member) => (
             <li key={member.id} className="py-3 flex items-center justify-between">
               <span className="text-gray-700">{member.name}</span>
-              <Button color="danger" onPress={() => onDeleteMember(member.id)} className="px-3 py-1 text-xs">
+              <Button color="danger" onClick={() => onDeleteMember(member.id)} className="px-3 py-1 text-xs">
                 削除
               </Button>
             </li>
@@ -59,23 +103,25 @@ export default function Users({ groupId, groupMembers, setGroupMembers }: { grou
       )}
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="新しいメンバーを追加">
-        <Form className="w-full max-w-xs" onSubmit={onSubmit}>
-          <Input
-            id="memberName"
-            label="メンバー名"
-            type="text"
-            value={memberName}
-            onChange={handleMemberNameChange}
-            placeholder="例: 山田太郎"
-            isRequired
-          />
-          <div className="mt-6 flex justify-end gap-x-3">
-            <Button type="button" color="secondary" onPress={() => setIsModalOpen(false)}>
-              キャンセル
-            </Button>
-            <Button type="submit" color="primary">
-              追加
-            </Button>
+        <Form className="flex justify-center" onSubmit={onSubmit}>
+          <div className="w-full">
+            <Input
+              id="memberName"
+              label="メンバー名"
+              type="text"
+              value={memberName}
+              onChange={handleMemberNameChange}
+              placeholder="例: 山田太郎"
+              required
+            />
+            <div className="mt-6 flex justify-center gap-x-6">
+              <Button type="button" color="secondary" onClick={() => setIsModalOpen(false)}>
+                キャンセル
+              </Button>
+              <Button type="submit" color="primary">
+                追加
+              </Button>
+            </div>
           </div>
         </Form>
       </Modal>
