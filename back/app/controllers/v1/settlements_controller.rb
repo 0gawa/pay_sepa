@@ -9,6 +9,9 @@ class V1::SettlementsController < ApplicationController
       },
       only: [:id, :amount, :from_user_id, :to_user_id]
     )
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: "Group not found" }, status: :not_found
+    return
   end
 
   #TODO: createのロジックの修正

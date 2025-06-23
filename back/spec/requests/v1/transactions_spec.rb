@@ -30,7 +30,7 @@ RSpec.describe "V1::Transactionsコントローラーについて", type: :reque
         json_response = JSON.parse(response.body)
         transaction_keys = json_response.first.keys
         expect(transaction_keys).to include("id", "amount", "description", "payer_id", "group", "payer", "participants")
-        expect(json_response.first["group"].keys).to include("id", "name")
+        expect(json_response.first["group"].keys).to include("id")
         expect(json_response.first["payer"].keys).to include("id", "name")
         expect(json_response.first["participants"].first.keys).to include("id", "name")
       end

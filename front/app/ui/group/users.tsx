@@ -1,62 +1,130 @@
-"use client";
+'use client';
 
 import { useState } from 'react';
+import { Form } from "@heroui/react";
+import Modal from '@/app/ui/group/create-user-modal';
+import { UserGroupIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { Member, GetResponse } from '@/lib/types/member';
+import Button from '@/app/ui/button';
+import Input from '@/app/ui/form/text-input';
 
-export default function Users({groupId}: {groupId: string}) {
-  // テスト用ユーザー
-  const [allParticipants, setAllParticipants] = useState<string[]>([
-    '山田', '佐藤', '鈴木', '田中', '高橋'
-  ]);
-  const [message, setMessage] = useState('');
-  const [newParticipantName, setNewParticipantName] = useState<string>('');
+export default function Users({ groupId, groupMembers = [], setGroupMembers }: { groupId: string, groupMembers: Member[], setGroupMembers: React.Dispatch<React.SetStateAction<Member[]>>}) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [memberName, setMemberName] = useState('');
 
-  const addNewParticipant = () => {
-    const trimmedName = newParticipantName.trim();
-    if (trimmedName && !allParticipants.includes(trimmedName)) {
-      setAllParticipants(prev => [...prev, trimmedName]);
-      setNewParticipantName('');
-      setMessage(`${trimmedName} が参加者リストに追加されました。`);
-      setTimeout(() => setMessage(''), 3000);
-    } else if (allParticipants.includes(trimmedName)) {
-      setMessage(`${trimmedName} はすでに参加者リストに存在します。`);
-      setTimeout(() => setMessage(''), 3000);
+  const handleMemberNameChange = (e: any) => {
+    setMemberName(e.target.value);
+  };
+  const onDeleteMember = (id: number) => {
+    setGroupMembers( (prev: Member[]) => prev.filter( member => member.id !== id ) );
+  };
+
+  const fetchGroupMembers = async () => {
+    const maxRetries: number = 3;
+    const delayMs: number = 1000;
+    let attempts: number = 0;
+    while (attempts < maxRetries) {
+      attempts++;
+      console.log(`Fetching UserIndex (Attempt ${attempts} of ${maxRetries})`);
+      try {
+        const response = await fetch(`/api/group/users?groupId=${groupId}`, {
+          method: 'GET',
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch group members');
+        }
+
+        const data: GetResponse = await response.json();
+        setGroupMembers(data.user);
+      } catch (error: any) {
+        console.warn(`Fetch encountered an error: ${error.message}.`);
+        if (attempts < maxRetries) {
+          console.warn(`Retrying in ${delayMs}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+        } else {
+          console.error(`Fetch definitively failed after ${attempts} attempts.`);
+          throw error;
+        }
+      }
     }
+  }
+
+  const onSubmit = async (e: any) => {
+    e.preventDefault();
+
+    try {
+      const response = await fetch(`/api/group/users/create?groupId=${groupId}&name=${memberName}`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.errors ? errorData.errors.join(', ') : '登録に失敗しました。');
+      }
+    }catch (e: any) {
+      console.error('Error adding member:', e);
+      return [];
+    }
+    // fetch and set group members
+    fetchGroupMembers();
+
+    console.log('GroupMembers: ' + groupMembers);
+    setMemberName('');
+    setIsModalOpen(false);
   };
 
   return (
-    <div className="mb-10 p-6 bg-purple-50 rounded-xl shadow-md">
-      <h2 className="text-2xl font-bold text-purple-600 mb-5 flex items-center">
-        グループメンバー管理
-      </h2>
-      <div className="mb-4">
-        <label htmlFor="new-participant" className="block text-sm font-medium text-gray-700 mb-1">
-          新しいメンバーを追加:
-        </label>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            id="new-participant"
-            value={newParticipantName}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewParticipantName(e.target.value)}
-            className="flex-grow p-3 border border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition duration-200"
-            placeholder="例: 吉田"
-          />
-          <button
-            onClick={addNewParticipant}
-            className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transform transition duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-          >
-            追加
-          </button>
-        </div>
+    <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-xl font-semibold text-gray-800 flex items-center">
+          <UserGroupIcon className="h-6 w-6 mr-2 text-blue-500" />
+          グループメンバー
+        </h3>
+        <Button onClick={() => setIsModalOpen(true)} color="primary" className="inline-flex">
+          <PlusIcon className="h-5 w-5"/>
+          メンバー追加
+        </Button>
       </div>
-      <div className="text-sm font-medium text-gray-700 mb-2">現在のメンバー:</div>
-      <div className="flex flex-wrap gap-2">
-        {allParticipants.map(participant => (
-          <span key={participant} className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">
-            {participant}
-          </span>
-        ))}
-      </div>
+
+      {groupMembers?.length === 0 ? (
+        <p className="text-gray-500 text-center py-4">まだメンバーがいません。追加してください。</p>
+      ) : (
+        <ul className="divide-y divide-gray-200">
+          {groupMembers?.map((member) => (
+            <li key={member.id} className="py-3 flex items-center justify-between">
+              <span className="text-gray-700">{member.name}</span>
+              <Button color="danger" onClick={() => onDeleteMember(member.id)} className="px-3 py-1 text-xs">
+                削除
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="新しいメンバーを追加">
+        <Form className="flex justify-center" onSubmit={onSubmit}>
+          <div className="w-full">
+            <Input
+              id="memberName"
+              label="メンバー名"
+              type="text"
+              value={memberName}
+              onChange={handleMemberNameChange}
+              placeholder="例: 山田太郎"
+              required
+            />
+            <div className="mt-6 flex justify-center gap-x-6">
+              <Button type="button" color="secondary" onClick={() => setIsModalOpen(false)}>
+                キャンセル
+              </Button>
+              <Button type="submit" color="primary">
+                追加
+              </Button>
+            </div>
+          </div>
+        </Form>
+      </Modal>
     </div>
   );
 }
