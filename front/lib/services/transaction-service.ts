@@ -39,3 +39,18 @@ export const fetchTransactions = async (groupId: string, setGroupTransactions: R
   }
   return [];
 }
+
+export const deleteTransaction = async (groupId: string, transactionId: number) => {
+  try {
+    const response = await fetch(`/api/group/transactions/destroy?groupId=${groupId}&transactionId=${transactionId}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.errors ? errorData.errors.join(', ') : '削除に失敗しました。');
+    }
+  } catch (e: any) {
+    console.error('Error deleting transaction:', e);
+  }
+}

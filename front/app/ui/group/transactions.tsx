@@ -1,16 +1,17 @@
 "use client";
 
 import Modal from '@/app/ui/modal';
+import TransactionDataBox from '@/app/ui/box/transaction-data-box';
 import { useState } from 'react';
 import { CurrencyYenIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { Form } from '@heroui/react';
 import { Member } from '@/lib/types/member';
-import { GetResponse } from '@/lib/types/transaction';
 import { Transaction } from '@/lib/types/transaction';
 import SelectInput from '@/app/ui/form/select-input';
 import NumberInput from '@/app/ui/form/number-input';
 import Textarea from '@/app/ui/form/textarea-input';
 import Button from '@/app/ui/button';
+import {fetchTransactions, deleteTransaction } from '@/lib/services/transaction-service';
 
 interface TransactionProps {
   groupId: string,
@@ -27,10 +28,14 @@ export default function Transactions({ groupId, groupMembers=[], groupTransactio
   const [payerId, setPayerId] = useState<number>();
   const [participants, setParticipants] = useState<Member[]>([]);
   
-  const removeTransaction = (id: number) => {
-    setGroupTransactions(groupTransactions.filter(tx => tx.id !== id));
-    setMessage('取引が削除されました。');
-    setTimeout(() => setMessage(''), 3000);
+  const removeTransaction = async (e: any, id: number) => {
+    e.preventDefault();
+    if (window.confirm('この操作は取り消せません。本当に削除しますか？')) {
+      deleteTransaction(groupId, id);
+      fetchTransactions(groupId, setGroupTransactions);
+      setMessage('取引が削除されました。');
+      setTimeout(() => setMessage(''), 3000);
+    }
   };
   const handleParticipantChange = (member: Member, isChecked: boolean) => {
     if (isChecked) {
@@ -39,44 +44,7 @@ export default function Transactions({ groupId, groupMembers=[], groupTransactio
       setParticipants(prev => prev.filter(m => m !== member));
     }
   };
-  const fetchTransactions = async () => {
-    const maxRetries: number = 3;
-    const delayMs: number = 1000;
-    let attempts: number = 0;
-    while (attempts < maxRetries) {
-      attempts++;
-      console.log(`Fetching TransactionIndex (Attempt ${attempts} of ${maxRetries})`);
-      try {
-        const response = await fetch(`/api/group/transactions?groupId=${groupId}`, {
-          method: 'GET',
-        });
-  
-        if (!response.ok) {
-          throw new Error('Failed to fetch group members');
-        }
-  
-        const data: GetResponse[] = await response.json();
-        const newTransactions: Transaction[] = data.map(tx => ({
-          id: tx.id,
-          description: tx.description,
-          amount: tx.amount,
-          payer: tx.payer.id,
-          participants: tx.participants.map(p => p.id),
-        }));
-        setGroupTransactions(newTransactions);
-        break;
-      } catch (error: any) {
-        console.warn(`Fetch encountered an error: ${error.message}.`);
-        if (attempts < maxRetries) {
-          console.warn(`Retrying in ${delayMs}ms...`);
-          await new Promise(resolve => setTimeout(resolve, delayMs));
-        } else {
-          console.error(`Fetch definitively failed after ${attempts} attempts.`);
-          throw error;
-        }
-      }
-    }
-  }
+
   const onSubmit = async (e: any) => {
     e.preventDefault();
 
@@ -109,7 +77,7 @@ export default function Transactions({ groupId, groupMembers=[], groupTransactio
     setDescription('');
     setAmount(0);
     setParticipants([]);
-    fetchTransactions();
+    fetchTransactions(groupId, setGroupTransactions);
     setIsModalOpen(false);
   };
 
@@ -124,28 +92,29 @@ export default function Transactions({ groupId, groupMembers=[], groupTransactio
           取引を追加
         </Button>
       </div>
+      {message && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 text-center" role="alert">
+          <span className="block sm:inline">{message}</span>
+        </div>
+      )}
       {groupTransactions.length === 0 ? (
         <p className="text-gray-600 text-center py-4">まだ取引がありません。</p>
       ) : (
         <div className="space-y-4">
-          {groupTransactions.map((tx: Transaction) => (
-            <div key={tx.id} className="bg-white p-4 rounded-lg shadow-sm border border-purple-200 flex justify-between items-center">
-              <div>
-                <p className="text-lg font-semibold text-gray-800">
-                  <span className="text-blue-600">{tx.payer}</span> が{' '}
-                  <span className="text-purple-600">¥{tx.amount.toLocaleString()}</span> を支払い
-                </p>
-                <p className="text-sm text-gray-600 mt-1">
-                  参加者: {tx.participants.join(', ')}
-                </p>
-              </div>
-              <button
-                onClick={() => removeTransaction(tx.id)}
-                className="text-red-500 hover:text-red-700 transition duration-200 p-2 rounded-full hover:bg-red-100"
-                aria-label="取引を削除"
-              >
-              </button>
-            </div>
+          {groupTransactions.map((tx: Transaction) => (         
+            <TransactionDataBox
+              key={tx.id}
+              color="danger"
+              buttonFunction={(e: any) => removeTransaction(e, tx.id)}
+            >
+              <p className="text-lg text-gray-800">
+                <span className="text-blue-600 font-semibold">{tx.payer}</span> が{' '}
+                <span className="text-purple-600 font-semibold">¥{tx.amount.toLocaleString()}</span> を支払い
+              </p>
+              <p className="text-sm text-gray-600 mt-1">
+                参加者: {tx.participants.join(', ')}
+              </p>
+            </TransactionDataBox>
           ))}
         </div>
       )}
