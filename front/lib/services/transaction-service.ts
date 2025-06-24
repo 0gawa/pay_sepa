@@ -1,7 +1,7 @@
 import { GetResponse } from '@/lib/types/transaction';
 import { Transaction } from '@/lib/types/transaction';
 
-export const getTransactions = async (groupId: string) => {
+export const fetchTransactions = async (groupId: string, setGroupTransactions: React.Dispatch<React.SetStateAction<Transaction[]>>) => {
   const maxRetries: number = 3;
   const delayMs: number = 1000;
   let attempts: number = 0;
@@ -23,10 +23,10 @@ export const getTransactions = async (groupId: string) => {
         id: tx.id,
         description: tx.description,
         amount: tx.amount,
-        payer: tx.payer.id,
-        participants: tx.participants.map(p => p.id),
+        payer: tx.payer,
+        participants: tx.participants,
       }));
-      return newTransactions;
+      return setGroupTransactions(newTransactions);
     }catch (error: any) {
       console.warn(`Fetch encountered an error: ${error.message}.`);
       if (attempts < maxRetries) {
@@ -38,4 +38,19 @@ export const getTransactions = async (groupId: string) => {
     }
   }
   return [];
+}
+
+export const deleteTransaction = async (groupId: string, transactionId: number) => {
+  try {
+    const response = await fetch(`/api/group/transactions/destroy?groupId=${groupId}&transactionId=${transactionId}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.errors ? errorData.errors.join(', ') : '削除に失敗しました。');
+    }
+  } catch (e: any) {
+    console.error('Error deleting transaction:', e);
+  }
 }

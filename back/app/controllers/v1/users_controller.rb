@@ -18,11 +18,16 @@ class V1::UsersController < ApplicationController
   end
 
   def destroy
-    user = User.find(params[:id])
+    group = Group.find(params[:group_id])
+    user = group.users.find(params[:id])
     user.destroy
-    head :no_content
+    render json: { message: "Deleted user" }, status: :ok
   rescue ActiveRecord::RecordNotFound
-    render json: { error: "User not found" }, status: :not_found
+    if group.nil?
+      render json: { error: "Group not found" }, status: :not_found
+    else
+      render json: { error: "User not found" },  status: :not_found
+    end
   end
 
   private

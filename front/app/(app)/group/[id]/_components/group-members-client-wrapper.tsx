@@ -22,7 +22,7 @@ export default function GroupMembersClientWrapper({ groupId, initialGroupMembers
         <Transactions groupId={groupId} groupMembers={groupMembers} groupTransactions={groupTransactions} setGroupTransactions={setGroupTransactions} />
       </div>
       <div className="mt-6">
-        <Users groupId={groupId} groupMembers={groupMembers} setGroupMembers={setGroupMembers} />
+        <Users groupId={groupId} groupMembers={groupMembers} setGroupMembers={setGroupMembers} setGroupTransactions={setGroupTransactions}/>
       </div>
     </>
   );

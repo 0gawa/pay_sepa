@@ -5,8 +5,8 @@ export interface Transaction{
   id: number;
   description: string;
   amount: number;
-  payer: number;
-  participants: number[]; // 複数人いることを考慮
+  payer: Member;
+  participants: Member[]; // 複数人いることを考慮
 }
 
 export interface GetResponse {
