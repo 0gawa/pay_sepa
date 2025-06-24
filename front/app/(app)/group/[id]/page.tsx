@@ -1,6 +1,6 @@
 import { Member }   from '@/lib/types/member';
 import { Transaction, GetResponse } from '@/lib/types/transaction';
-import GroupMembersClientWrapper from './_components/group-members-client-wrapper'; 
+import GroupMembersClientWrapper from './_components/group-members-client-wrapper';
 
 interface GetMemberResponse {
   user: Member[];
@@ -44,8 +44,8 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
         id: tx.id,
         description: tx.description,
         amount: tx.amount,
-        payer: tx.payer.id,
-        participants: tx.participants.map(p => p.id),
+        payer: tx.payer,
+        participants: tx.participants,
       }));
       return newTransactions;
     } catch (e: any) {
