@@ -5,20 +5,27 @@ import { Form } from "@heroui/react";
 import Modal from '@/app/ui/group/create-user-modal';
 import { UserGroupIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { Member, GetResponse } from '@/lib/types/member';
+import { Transaction } from '@/lib/types/transaction';
 import Button from '@/app/ui/button';
 import Input from '@/app/ui/form/text-input';
+import { deleteUser } from '@/lib/services/user-service';
+import { fetchTransactions } from '@/lib/services/transaction-service';
 
-export default function Users({ groupId, groupMembers = [], setGroupMembers }: { groupId: string, groupMembers: Member[], setGroupMembers: React.Dispatch<React.SetStateAction<Member[]>>}) {
+interface UsersProps { 
+  groupId: string,
+  groupMembers: Member[],
+  setGroupMembers: React.Dispatch<React.SetStateAction<Member[]>>, 
+  setGroupTransactions: React.Dispatch<React.SetStateAction<Transaction[]>>,
+}
+
+export default function Users({ groupId, groupMembers = [], setGroupMembers, setGroupTransactions }: UsersProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [memberName, setMemberName] = useState('');
 
   const handleMemberNameChange = (e: any) => {
     setMemberName(e.target.value);
   };
-  const onDeleteMember = (id: number) => {
-    setGroupMembers( (prev: Member[]) => prev.filter( member => member.id !== id ) );
-  };
-
+  
   const fetchGroupMembers = async () => {
     const maxRetries: number = 3;
     const delayMs: number = 1000;
@@ -49,6 +56,15 @@ export default function Users({ groupId, groupMembers = [], setGroupMembers }: {
       }
     }
   }
+
+  const onDeleteMember = async (e: any, id: number) => {
+    e.preventDefault();
+    if (window.confirm('削除すると、取引データも削除されます。よろしいですか？')) {
+      deleteUser(groupId, id);
+      fetchGroupMembers();
+      fetchTransactions(groupId, setGroupTransactions);
+    }
+  };
 
   const onSubmit = async (e: any) => {
     e.preventDefault();
@@ -94,7 +110,7 @@ export default function Users({ groupId, groupMembers = [], setGroupMembers }: {
           {groupMembers?.map((member) => (
             <li key={member.id} className="py-3 flex items-center justify-between">
               <span className="text-gray-700">{member.name}</span>
-              <Button color="danger" onClick={() => onDeleteMember(member.id)} className="px-3 py-1 text-xs">
+              <Button color="danger" onClick={(e: any) => onDeleteMember(e, member.id)} className="px-3 py-1 text-xs">
                 削除
               </Button>
             </li>

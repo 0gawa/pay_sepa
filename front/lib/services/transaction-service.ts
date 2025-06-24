@@ -1,7 +1,7 @@
 import { GetResponse } from '@/lib/types/transaction';
 import { Transaction } from '@/lib/types/transaction';
 
-export const getTransactions = async (groupId: string) => {
+export const fetchTransactions = async (groupId: string, setGroupTransactions: React.Dispatch<React.SetStateAction<Transaction[]>>) => {
   const maxRetries: number = 3;
   const delayMs: number = 1000;
   let attempts: number = 0;
@@ -26,7 +26,7 @@ export const getTransactions = async (groupId: string) => {
         payer: tx.payer.id,
         participants: tx.participants.map(p => p.id),
       }));
-      return newTransactions;
+      return setGroupTransactions(newTransactions);
     }catch (error: any) {
       console.warn(`Fetch encountered an error: ${error.message}.`);
       if (attempts < maxRetries) {
