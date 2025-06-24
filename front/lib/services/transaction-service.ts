@@ -23,8 +23,8 @@ export const fetchTransactions = async (groupId: string, setGroupTransactions: R
         id: tx.id,
         description: tx.description,
         amount: tx.amount,
-        payer: tx.payer.id,
-        participants: tx.participants.map(p => p.id),
+        payer: tx.payer,
+        participants: tx.participants,
       }));
       return setGroupTransactions(newTransactions);
     }catch (error: any) {

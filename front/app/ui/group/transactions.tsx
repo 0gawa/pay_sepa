@@ -108,11 +108,11 @@ export default function Transactions({ groupId, groupMembers=[], groupTransactio
               buttonFunction={(e: any) => removeTransaction(e, tx.id)}
             >
               <p className="text-lg text-gray-800">
-                <span className="text-blue-600 font-semibold">{tx.payer}</span> が{' '}
+                <span className="text-blue-600 font-semibold">{tx.payer.name}</span> が{' '}
                 <span className="text-purple-600 font-semibold">¥{tx.amount.toLocaleString()}</span> を支払い
               </p>
               <p className="text-sm text-gray-600 mt-1">
-                参加者: {tx.participants.join(', ')}
+                参加者: {tx.participants.map(pt => pt.name).join(', ')}
               </p>
             </TransactionDataBox>
           ))}
