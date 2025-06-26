@@ -49,6 +49,7 @@ class V1::TransactionsController < ApplicationController
 
   def destroy
     transaction = @group.transaction_data.find(params[:id])
+    transaction.destroy
     render json: { message: "Transaction deleted successfully" }, status: :ok
   end
 

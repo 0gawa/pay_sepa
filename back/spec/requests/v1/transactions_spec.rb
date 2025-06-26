@@ -189,7 +189,7 @@ RSpec.describe "V1::Transactionsコントローラーについて", type: :reque
 
   describe "destroyアクションについて" do
     it "正しいidの時、正常に削除される" do
-      d_transaction = create(:transaction, payer: payer, group: group)
+      d_transaction = create(:transaction, group: group, payer: payer, description: "Lunch", amount: 3000, participants: [user1, user2])
       delete v1_group_transaction_path(group_id: group.id, id: d_transaction.id)
       expect(response).to have_http_status(:ok)
     end
