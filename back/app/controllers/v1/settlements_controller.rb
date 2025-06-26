@@ -11,7 +11,6 @@ class V1::SettlementsController < ApplicationController
     )
   rescue ActiveRecord::RecordNotFound
     render json: { error: "Group not found" }, status: :not_found
-    return
   end
 
   #TODO: createのロジックの修正
@@ -36,9 +35,10 @@ class V1::SettlementsController < ApplicationController
   end
 
    def destroy
-    settlement = Settlement.find(params[:id])
+    group = Group.find(params[:group_id])
+    settlement = group.settlements.find(params[:id])
     settlement.destroy
-    head :no_content
+    render json: { message: "Group deleted successfully" }, status: :ok
    rescue ActiveRecord::RecordNotFound
     render json: { error: "Settlement not found" }, status: :not_found
    end
