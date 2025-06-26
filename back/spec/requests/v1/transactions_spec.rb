@@ -1,10 +1,10 @@
 require 'rails_helper'
 
 RSpec.describe "V1::Transactionsコントローラーについて", type: :request do
-  let(:group)        { create(:group) }
-  let(:payer)        { create(:user, name: "Payer User",         group: group) }
-  let(:participant1) { create(:user, name: "Participant User 1", group: group) }
-  let(:participant2) { create(:user, name: "Participant User 2", group: group) }
+  let!(:group) { create(:group) }
+  let!(:payer) { create(:user, name: "Payer User",         group: group) }
+  let!(:user1) { create(:user, name: "Participant User 1", group: group) }
+  let!(:user2) { create(:user, name: "Participant User 2", group: group) }
 
   describe "indexアクションについて" do
     it "パスが存在する" do
@@ -13,12 +13,10 @@ RSpec.describe "V1::Transactionsコントローラーについて", type: :reque
     end
 
     context "取引が存在するとき" do
-      let(:transaction1) {create(:transaction, payer: payer, description: "Lunch", amount: 3000)}
-      let(:transaction2) {create(:transaction, payer: participant1, description: "Dinner", amount: 5000)}
+      let!(:transaction1) { create(:transaction, group: group, payer: payer, description: "Lunch", amount: 3000, participants: [user1, user2]) }
+      let!(:transaction2) { create(:transaction, group: group, payer: user1, description: "Dinner", amount: 5000, participants: [user1, user2]) }
       
       before {
-        transaction1.participants << participant1
-        transaction2.participants << participant2
         get v1_group_transactions_path(group_id: group.id)
       }
 
@@ -52,13 +50,13 @@ RSpec.describe "V1::Transactionsコントローラーについて", type: :reque
   end
 
   describe "createアクションについて" do
-    let(:valid_attributes) do
+    let!(:valid_attributes) do
       {
         transaction: {
           payer_id: payer.id,
           amount: 1500.0,
           description: "Coffee Break",
-          participant_ids: [payer.id, participant1.id]
+          participant_ids: [payer.id, user1.id]
         }
       }
     end
@@ -67,6 +65,7 @@ RSpec.describe "V1::Transactionsコントローラーについて", type: :reque
       it "新しい取引を作成し、HTTPステータス201を返すこと" do
         expect {
           post v1_group_transactions_path(group_id: group.id), params: valid_attributes
+          puts response.body
         }.to change(Transaction, :count).by(1).and(
              change(TransactionParticipation, :count).by(2)
            )
@@ -79,7 +78,7 @@ RSpec.describe "V1::Transactionsコントローラーについて", type: :reque
         expect(json_response["description"]).to eq("Coffee Break")
         expect(json_response["payer"]["id"]).to eq(payer.id)
         expect(json_response["participants"].size).to eq(2)
-        expect(json_response["participants"].map{ |p| p["id"] }).to match_array([payer.id, participant1.id])
+        expect(json_response["participants"].map{ |p| p["id"] }).to match_array([payer.id, user1.id])
       end
     end
 
@@ -91,7 +90,7 @@ RSpec.describe "V1::Transactionsコントローラーについて", type: :reque
               payer_id: payer.id,
               # amount: nil, # amount を欠けさせる
               description: "Invalid Transaction",
-              participant_ids: [payer.id, participant1.id]
+              participant_ids: [payer.id, user1.id]
             }
           }
         end
@@ -169,7 +168,7 @@ RSpec.describe "V1::Transactionsコントローラーについて", type: :reque
                payer_id: 9999, # 存在しないPayer ID
                amount: 1000,
                description: "Invalid Payer",
-               participant_ids: [participant1.id]
+               participant_ids: [user1.id]
              }
            }
          end

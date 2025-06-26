@@ -8,12 +8,4 @@ class Transaction < ApplicationRecord
   validates :payer,  presence: true
   validates :group,  presence: true
   validates :description, length: {maximum: 300}
-
-  private
-
-  def has_participants?
-    unless participants.present?
-      raise ActiveRecord::RecordInvalid, "取引の相手がいません"
-    end
-  end
 end

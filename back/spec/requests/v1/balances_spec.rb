@@ -222,7 +222,7 @@ RSpec.describe "V1::Balances", type: :request do
         get v1_group_balances_path(group_id: group.id)
         expect(response).to have_http_status(:not_found)
         json_response = JSON.parse(response.body)
-        expect(json_response["message"]).to eq("Transactions not found")
+        expect(json_response["error"]).to eq("Transactions not found")
       end
     end
 
@@ -231,7 +231,7 @@ RSpec.describe "V1::Balances", type: :request do
         get v1_group_balances_path(group_id: -1) # 存在しないID
         expect(response).to have_http_status(:not_found)
         json_response = JSON.parse(response.body)
-        expect(json_response["error"]).to include("Couldn't find Group")
+        expect(json_response["error"]).to include("Group not found")
       end
     end
 

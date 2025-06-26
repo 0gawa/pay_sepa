@@ -1,6 +1,10 @@
 class V1::TransactionsController < ApplicationController
+  rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
+  rescue_from ActiveRecord::RecordInvalid, with: :render_unprocessable_entity
+
+  before_action :set_group
+
   def index
-    set_group
     transactions = @group.transaction_data.includes(:payer, :participants)
     render json: transactions.as_json(
       include: {
@@ -13,40 +17,39 @@ class V1::TransactionsController < ApplicationController
   end
 
   def create
-    # paramsからparticipant_idsを取り出す。要素は配列
-    participant_ids = params[:transaction].delete(:participant_ids) || []
-    
-    transaction = Transaction.new(transaction_params)
-    
-    set_group
-    transaction.group_id = @group.id
-
+    # paymentという名を使用しているため、Railsのリレーション機能は使えないことに注意
+    participant_ids = transaction_params[:participant_ids]
     if participant_ids.empty?
       render json: { errors: "対象者が選択されていません" }, status: :unprocessable_entity
       return
     end
+    # リレーションの機能が利用できないため、participant_idsという変数(has_manyの機能の一部)は利用不可
+    transaction = Transaction.new(transaction_params.except(:participant_ids))
+    transaction.group_id = @group.id
 
-    # トランザクション内で参加者も保存
     ActiveRecord::Base.transaction do
       transaction.save!
-      participants = User.where(id: participant_ids)
+
+      participants = @group.users.where(id: participant_ids)
+      # グループにいないメンバーがいるかどうか
       if participants.size != participant_ids.size
         raise ActiveRecord::RecordInvalid
       end
       transaction.participants = participants
     end
 
-    render json: transaction.as_json(include: [:payer, :participants]), status: :created
-  rescue ActiveRecord::RecordInvalid => e
-    render json: { errors: e.message }, status: :unprocessable_entity
+    render json: transaction.as_json(
+      include: {
+        payer: { only: [:id, :name] },
+        participants: { only: [:id, :name] }
+      },
+      only: [:id, :date, :amount, :description, :payer_id]
+    ), status: :created
   end
 
   def destroy
-    transaction = Transaction.find(params[:id])
-    transaction.destroy
+    transaction = @group.transaction_data.find(params[:id])
     render json: { message: "Transaction deleted successfully" }, status: :ok
-  rescue ActiveRecord::RecordNotFound
-    render json: { error: "Transaction not found" }, status: :not_found
   end
 
   private
@@ -57,8 +60,13 @@ class V1::TransactionsController < ApplicationController
 
   def set_group
     @group = Group.find(params[:group_id])
-  rescue ActiveRecord::RecordNotFound
-    render json: { error: "Group not found" }, status: :not_found
-    return
+  end
+
+  def render_not_found(exception)
+    render json: { error: exception.message }, status: :not_found
+  end
+
+  def render_unprocessable_entity(exception)
+    render json: { errors: exception.record&.errors&.full_messages || [exception.message] }, status: :unprocessable_entity
   end
 end
