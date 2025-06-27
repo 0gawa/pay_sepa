@@ -23,13 +23,25 @@ export default function GroupMembersClientWrapper({ groupId, initialGroupMembers
   return (
     <>
       <div>
-        <Transactions groupId={groupId} groupMembers={groupMembers} groupTransactions={groupTransactions} setGroupTransactions={setGroupTransactions} />
+        <Transactions
+          groupId={groupId}
+          groupMembers={groupMembers}
+          groupTransactions={groupTransactions}
+          setGroupTransactions={setGroupTransactions}
+          setGroupBalances={setGroupBalances}
+        />
       </div>
       <div className='mt-6'>
         <Balances groupId={groupId} groupBalances={groupBalances} />
       </div>
       <div className="mt-6">
-        <Users groupId={groupId} groupMembers={groupMembers} setGroupMembers={setGroupMembers} setGroupTransactions={setGroupTransactions}/>
+        <Users
+          groupId={groupId}
+          groupMembers={groupMembers}
+          setGroupMembers={setGroupMembers}
+          setGroupTransactions={setGroupTransactions}
+          setGroupBalances={setGroupBalances}
+        />
       </div>
     </>
   );

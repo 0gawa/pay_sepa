@@ -7,20 +7,29 @@ import { CurrencyYenIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { Form } from '@heroui/react';
 import { Member } from '@/lib/types/member';
 import { Transaction } from '@/lib/types/transaction';
+import { Balance } from '@/lib/types/balance';
 import SelectInput from '@/app/ui/form/select-input';
 import NumberInput from '@/app/ui/form/number-input';
 import Textarea from '@/app/ui/form/textarea-input';
 import Button from '@/app/ui/button';
 import {fetchTransactions, deleteTransaction } from '@/lib/services/transaction-service';
+import { fetchGroupBalances } from '@/lib/services/balance-service';
 
 interface TransactionProps {
   groupId: string,
   groupMembers: Member[],
   groupTransactions: Transaction[],
   setGroupTransactions: React.Dispatch<React.SetStateAction<Transaction[]>>
+  setGroupBalances: React.Dispatch<React.SetStateAction<Balance[]>>
 }
 
-export default function Transactions({ groupId, groupMembers=[], groupTransactions=[], setGroupTransactions }: TransactionProps) {
+export default function Transactions({
+  groupId,
+  groupMembers=[],
+  groupTransactions=[],
+  setGroupTransactions,
+  setGroupBalances
+}: TransactionProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [message, setMessage] = useState<string>('');
   const [description, setDescription] = useState<string>('');
@@ -32,7 +41,8 @@ export default function Transactions({ groupId, groupMembers=[], groupTransactio
     e.preventDefault();
     if (window.confirm('この操作は取り消せません。本当に削除しますか？')) {
       await deleteTransaction(groupId, id); //TODO: write a blog
-      fetchTransactions(groupId, setGroupTransactions);
+      await fetchTransactions(groupId, setGroupTransactions);
+      fetchGroupBalances(groupId, setGroupBalances);
       setMessage('取引が削除されました。');
       setTimeout(() => setMessage(''), 3000);
     }
@@ -77,7 +87,8 @@ export default function Transactions({ groupId, groupMembers=[], groupTransactio
     setDescription('');
     setAmount(0);
     setParticipants([]);
-    fetchTransactions(groupId, setGroupTransactions);
+    await fetchTransactions(groupId, setGroupTransactions);
+    fetchGroupBalances(groupId, setGroupBalances);
     setIsModalOpen(false);
   };
 
