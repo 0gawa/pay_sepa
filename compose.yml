@@ -18,7 +18,6 @@ services:
       context: ./back
       dockerfile: Dockerfile
     environment:
-      RAILS_ENV: development
       TZ: Asia/Tokyo
     networks:
       - fixed_compose_network
@@ -51,6 +50,8 @@ services:
       POSTGRES_DB: app_test
     ports:
       - "5433:5432"
+    networks:
+      - fixed_compose_network
 volumes:
   front_node_modules:
   postgres_data:
