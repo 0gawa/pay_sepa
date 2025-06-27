@@ -8,11 +8,13 @@ class V1::BalancesController < ApplicationController
     transactions = group.transaction_data
 
     if !transactions.present?
-      render json: {message: "Transactions not found"}, status: :not_found
+      render json: {error: "Transactions not found"}, status: :not_found
       return
     end
 
     render json: {"settlements": BalanceCalculatorService.call(transactions)}, status: :ok
+  rescue ActiveRecord::RecordNotFound
+    render json: {error: "Group not found"}, status: :not_found
   rescue => e
     render json: {error: e.message}, status: :unprocessable_entity
   end

@@ -11,7 +11,7 @@ class V1::GroupsController < ApplicationController
   def destroy
     group = Group.find(params[:id])
     group.destroy
-    head :no_content
+    render json: { message: "Group deleted successfully" }, status: :ok
   rescue ActiveRecord::RecordNotFound
     render json: { error: "Group not found" }, status: :not_found
   end

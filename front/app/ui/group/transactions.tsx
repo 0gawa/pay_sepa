@@ -31,7 +31,7 @@ export default function Transactions({ groupId, groupMembers=[], groupTransactio
   const removeTransaction = async (e: any, id: number) => {
     e.preventDefault();
     if (window.confirm('この操作は取り消せません。本当に削除しますか？')) {
-      deleteTransaction(groupId, id);
+      await deleteTransaction(groupId, id); //TODO: write a blog
       fetchTransactions(groupId, setGroupTransactions);
       setMessage('取引が削除されました。');
       setTimeout(() => setMessage(''), 3000);
