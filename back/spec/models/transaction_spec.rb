@@ -2,9 +2,11 @@ require 'rails_helper'
 
 RSpec.describe "About Transaction", type: :model do
   describe "バリデーションについて" do
-    let(:group) {create(:group)}
-    let(:user) {create(:user)}
-    let(:transaction) {create(:transaction, payer: user, group: group)}
+    let!(:group) { create(:group) }
+    let!(:user1) { create(:user, group: group, name: 'Alice') }
+    let!(:user2) { create(:user, group: group, name: 'Bob') }
+    let!(:user3) { create(:user, group: group, name: 'Charlie') }
+    let(:transaction) { create(:transaction, payer: user1, group: group, participants: [user1, user2, user3]) }
 
     context "descriptionカラム" do
       it "nilでも有効" do

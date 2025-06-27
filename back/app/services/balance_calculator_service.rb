@@ -6,7 +6,7 @@ class BalanceCalculatorService
   def initialize(transactions)
     @transactions = transactions
   end
-
+# TODO: 清算する金額を自然数にする
   def call
     # 清算するための取引を保存
     settlement_transactions = []
@@ -17,25 +17,28 @@ class BalanceCalculatorService
     # balance > 0は立て替えた分の金額（つまり、清算の際にもらう側） 
     # balance < 0は立て替えた分の金額（つまり、清算の際に支払う側）
     # balance = 0.0は清算の必要がない人（または、清算が完了した人）
-    net_balances = Hash.new(0.0)
+    net_balances = Hash.new(0)
 
     @transactions.each do |transaction|
       payer    = transaction.payer
-      amount   = transaction.amount.to_f
+      amount   = transaction.amount.to_i
       for_whom = transaction.participants
 
-      # 立て替えた金額をpayerの残高に加算
+      # 立て替えた金額をpayerの残高に加算(自然数)
       net_balances[payer] += amount
+      # 割り勘で負担すべき金額をfor_whomの各メンバーから減算（自然数）
+      base_cost_per_beneficiary = amount / for_whom.count # 最小の自然数
+      remainder = amount % for_whom.count # 端数
 
-      # 割り勘で負担すべき金額をfor_whomの各メンバーから減算
-      cost_per_beneficiary = amount.to_f / for_whom.count
-      for_whom.each do |beneficiary|
-        net_balances[beneficiary] -= cost_per_beneficiary
+      for_whom.each_with_index do |beneficiary, index|
+        cost = base_cost_per_beneficiary
+        # 端数を先頭の参加者から順に1円ずつ割り当てる
+        cost += 1 if index < remainder
+        net_balances[beneficiary] -= cost
       end
     end
-
-    # 浮動小数の微小な誤差を防ぐために、小数2桁にする
-    net_balances.transform_values! { |balance| balance.round(2) }
+    # この段階でnet_balancesの値は整数になっている
+   
     # 債権者 (receivers): net_balance > 0
     # 債務者 (payers): net_balance < 0
     receivers = net_balances.select { |_person, balance| balance > 0 }
@@ -58,15 +61,15 @@ class BalanceCalculatorService
       settlement_transactions << {
         payer: current_payer_name.as_json(only: [:id, :name]),
         receiver: current_receiver_name.as_json(only: [:id, :name]),
-        amount: amount_to_settle.round(2) # 小数点以下2桁に丸める
+        amount: amount_to_settle
       }
 
       payers_map[current_payer_name] += amount_to_settle
       receivers_map[current_receiver_name] -= amount_to_settle
 
-      # 清算が完了した人をリストから削除 (浮動小数点数の比較のため微小な誤差を許容)
-      payers_map.delete(current_payer_name) if payers_map[current_payer_name].abs < 0.01
-      receivers_map.delete(current_receiver_name) if receivers_map[current_receiver_name] < 0.01
+      # 清算が完了した人をリストから削除
+      payers_map.delete(current_payer_name) if payers_map[current_payer_name] == 0
+      receivers_map.delete(current_receiver_name) if receivers_map[current_receiver_name] == 0
 
       receivers_map = receivers_map.sort_by { |_person, balance| -balance }.to_h
       payers_map    = payers_map.sort_by { |_person, balance| balance }.to_h
