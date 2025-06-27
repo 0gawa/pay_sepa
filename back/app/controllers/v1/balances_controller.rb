@@ -12,7 +12,7 @@ class V1::BalancesController < ApplicationController
       return
     end
 
-    render json: {"settlements": BalanceCalculatorService.call(transactions)}, status: :ok
+    render json: {"balance": BalanceCalculatorService.call(transactions)}, status: :ok
   rescue ActiveRecord::RecordNotFound
     render json: {error: "Group not found"}, status: :not_found
   rescue => e
