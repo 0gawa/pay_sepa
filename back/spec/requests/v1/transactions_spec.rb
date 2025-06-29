@@ -65,7 +65,6 @@ RSpec.describe "V1::Transactionsコントローラーについて", type: :reque
       it "新しい取引を作成し、HTTPステータス201を返すこと" do
         expect {
           post v1_group_transactions_path(group_id: group.id), params: valid_attributes
-          puts response.body
         }.to change(Transaction, :count).by(1).and(
              change(TransactionParticipation, :count).by(2)
            )
