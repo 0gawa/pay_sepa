@@ -1,4 +1,4 @@
-import { GetResponse } from "@/lib/types/balance";
+import { Balance, GetResponse } from "@/lib/types/balance";
 
 export const returnGroupBalanceData = async (groupId: string) => {
   try {
@@ -15,5 +15,23 @@ export const returnGroupBalanceData = async (groupId: string) => {
   } catch (e: any) {
     console.error("Server Component: データフェッチエラー:", e.message);
     return [];
+  }
+}
+
+export const fetchGroupBalances = async (groupId: string, setGroupBalances: React.Dispatch<React.SetStateAction<Balance[]>>) => {
+  try {
+    const response = await fetch(`/api/group/balances?groupId=${groupId}`, {
+      method: 'GET',
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch group members');
+    }
+    
+    const data: GetResponse = await response.json();
+    setGroupBalances(data.balance);
+  } catch (e: any) {
+    console.error("Server Component: データフェッチエラー:", e.message);
+    return;
   }
 }

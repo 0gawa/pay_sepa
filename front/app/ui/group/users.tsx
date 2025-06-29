@@ -5,20 +5,29 @@ import { Form } from "@heroui/react";
 import Modal from '@/app/ui/group/create-user-modal';
 import { UserGroupIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { Member, GetResponse } from '@/lib/types/member';
+import { Balance } from '@/lib/types/balance';
 import { Transaction } from '@/lib/types/transaction';
 import Button from '@/app/ui/button';
 import Input from '@/app/ui/form/text-input';
 import { deleteUser } from '@/lib/services/user-service';
 import { fetchTransactions } from '@/lib/services/transaction-service';
+import { fetchGroupBalances } from '@/lib/services/balance-service';
 
 interface UsersProps { 
   groupId: string,
   groupMembers: Member[],
   setGroupMembers: React.Dispatch<React.SetStateAction<Member[]>>, 
   setGroupTransactions: React.Dispatch<React.SetStateAction<Transaction[]>>,
+  setGroupBalances: React.Dispatch<React.SetStateAction<Balance[]>>
 }
 
-export default function Users({ groupId, groupMembers = [], setGroupMembers, setGroupTransactions }: UsersProps) {
+export default function Users({
+  groupId,
+  groupMembers = [],
+  setGroupMembers,
+  setGroupTransactions,
+  setGroupBalances
+}: UsersProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [memberName, setMemberName] = useState('');
 
@@ -61,8 +70,9 @@ export default function Users({ groupId, groupMembers = [], setGroupMembers, set
     e.preventDefault();
     if (window.confirm('削除すると、取引データも削除されます。よろしいですか？')) {
       deleteUser(groupId, id);
-      fetchGroupMembers();
-      fetchTransactions(groupId, setGroupTransactions);
+      await fetchGroupMembers();
+      await fetchTransactions(groupId, setGroupTransactions);
+      fetchGroupBalances(groupId, setGroupBalances);
     }
   };
 
@@ -82,7 +92,6 @@ export default function Users({ groupId, groupMembers = [], setGroupMembers, set
       console.error('Error adding member:', e);
       return [];
     }
-    // fetch and set group members
     fetchGroupMembers();
 
     console.log('GroupMembers: ' + groupMembers);

@@ -1,4 +1,6 @@
 class V1::GroupsController < ApplicationController
+  before_action :set_group, only: [:destroy]
+
   def create
     group = Group.new(group_params)
     if group.save
@@ -9,16 +11,17 @@ class V1::GroupsController < ApplicationController
   end
 
   def destroy
-    group = Group.find(params[:id])
-    group.destroy
+    @group.destroy
     render json: { message: "Group deleted successfully" }, status: :ok
-  rescue ActiveRecord::RecordNotFound
-    render json: { error: "Group not found" }, status: :not_found
   end
 
   private
 
   def group_params
     params.require(:group).permit(:name, :description)
+  end
+
+  def set_group
+    @group = Group.find(params[:id])
   end
 end
