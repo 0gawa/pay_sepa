@@ -1,6 +1,31 @@
 import { GetResponse } from '@/lib/types/transaction';
 import { Transaction } from '@/lib/types/transaction';
 
+export const returnGroupTransactionData = async (groupId: string) => {
+  try {
+    const response = await fetch(`${process.env.FRONT_GROUP_URL}/api/group/transactions?groupId=${groupId}`, {
+      method: 'GET',
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch group members');
+    }
+    
+    const data: GetResponse[] = await response.json();
+    const newTransactions: Transaction[] = data.map(tx => ({
+      id: tx.id,
+      description: tx.description,
+      amount: tx.amount,
+      payer: tx.payer,
+      participants: tx.participants,
+    }));
+    return newTransactions;
+  } catch (e: any) {
+    console.error("Server Component: データフェッチエラー:", e.message);
+    return [];
+  }
+}
+
 export const fetchTransactions = async (groupId: string, setGroupTransactions: React.Dispatch<React.SetStateAction<Transaction[]>>) => {
   const maxRetries: number = 3;
   const delayMs: number = 1000;
