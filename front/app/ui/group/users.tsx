@@ -69,7 +69,7 @@ export default function Users({
   const onDeleteMember = async (e: any, id: number) => {
     e.preventDefault();
     if (window.confirm('削除すると、取引データも削除されます。よろしいですか？')) {
-      deleteUser(groupId, id);
+      await deleteUser(groupId, id);
       await fetchGroupMembers();
       await fetchTransactions(groupId, setGroupTransactions);
       fetchGroupBalances(groupId, setGroupBalances);

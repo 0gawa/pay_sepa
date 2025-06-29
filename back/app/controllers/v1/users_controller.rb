@@ -15,7 +15,7 @@ class V1::UsersController < ApplicationController
   end
 
   def destroy
-    @group.users.destroy
+    @group.users.find(params[:id]).destroy
     render json: { message: "User deleted successfully" }, status: :ok
   end
 

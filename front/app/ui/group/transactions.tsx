@@ -117,6 +117,7 @@ export default function Transactions({
               key={tx.id}
               color="danger"
               buttonFunction={(e: any) => removeTransaction(e, tx.id)}
+              selectedTransaction={tx}
             >
               <p className="text-lg text-gray-800">
                 <span className="text-blue-600 font-semibold">{tx.payer.name}</span> が{' '}
