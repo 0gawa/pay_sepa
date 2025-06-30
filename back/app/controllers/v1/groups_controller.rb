@@ -1,5 +1,9 @@
 class V1::GroupsController < ApplicationController
-  before_action :set_group, only: [:destroy]
+  before_action :set_group, only: [:show, :destroy]
+
+  def show
+    render json: @group.as_json(only: [:id, :name, :description]), status: :ok
+  end
 
   def create
     group = Group.new(group_params)

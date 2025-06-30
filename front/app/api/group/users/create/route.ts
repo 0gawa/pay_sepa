@@ -4,7 +4,7 @@ export async function POST(req: any){
   try{
     const { searchParams } = new URL(req.url);
     const groupId = searchParams.get("groupId");
-    const name = searchParams.get("name");
+    const name    = searchParams.get("name");
 
     const response = await fetch(process.env.API_BASE_URL + `groups/${groupId}/users`, {
       method: 'POST',

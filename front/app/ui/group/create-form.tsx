@@ -48,20 +48,31 @@ export default function CreateForm() {
     e.preventDefault(); // デフォルトのフォーム送信を防ぐ
 
     try{
-      const response = await fetch(`/api/group/create?name=${groupName}&description=${groupDescription}`, {
+      const responseGroup = await fetch(`/api/group/create?name=${groupName}&description=${groupDescription}`, {
         method: 'POST',
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.errors ? errorData.errors.join(', ') : '投稿に失敗しました。');
+      if (!responseGroup.ok) {
+        const errorData = await responseGroup.json();
+        throw new Error(errorData.errors ? errorData.errors.join(', ') : 'グループ作成に失敗しました。');
       }
 
-      const data: PostResponse = await response.json();
+      const data: PostResponse = await responseGroup.json();
       setSubmitMessage('グループのURL:' + process.env.FRONT_GROUP_URL + 'group/' + data.name);
-      console.log('グループ名:', data.name);
-      console.log('グループ説明:',data.description);
-      console.log('メンバー:', members.filter(member => member.trim() !== '')); // 空のメンバーを除外
+
+      // メンバーの作成
+      const members_array = members.filter(member => member.trim() !== '');
+      members_array.map(async (member: string) => {
+        const responseMembers = await fetch(`/api/group/users/create?name=${member}&groupId=${data.id}`, {
+          method: 'POST',
+        });
+
+        if (!responseMembers.ok) {
+          await fetch(`/api/group/users/create?name=${member}&groupId${data.id}`, {
+            method: 'POST',
+          });
+        }
+      })      
 
       router.push(`/group/url?id=${data.id}`)
     }catch(e: any){

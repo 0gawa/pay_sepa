@@ -36,7 +36,7 @@ export default function Header() {
                 </div>
               </Modal>
             </li>
-            <li><Link href="#balance" className="text-gray-600 hover:text-indigo-600 font-medium rounded-lg px-3 py-2 transition-colors">清算</Link></li>
+            {/* <li><Link href="#balance" className="text-gray-600 hover:text-indigo-600 font-medium rounded-lg px-3 py-2 transition-colors">清算</Link></li> */}
           </ul>
         </nav>
       </div>
