@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Form } from "@heroui/react";
 import Modal from '@/app/ui/group/create-user-modal';
-import { UserGroupIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { UserGroupIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { Member, GetResponse } from '@/lib/types/member';
 import { Balance } from '@/lib/types/balance';
 import { Transaction } from '@/lib/types/transaction';
@@ -30,6 +30,7 @@ export default function Users({
 }: UsersProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [memberName, setMemberName] = useState('');
+  const [submitMessage, setSubmitMessage] = useState<string>('');
 
   const handleMemberNameChange = (e: any) => {
     setMemberName(e.target.value);
@@ -88,15 +89,19 @@ export default function Users({
         const errorData = await response.json();
         throw new Error(errorData.errors ? errorData.errors.join(', ') : '登録に失敗しました。');
       }
-    }catch (e: any) {
-      console.error('Error adding member:', e);
-      return [];
-    }
-    fetchGroupMembers();
 
-    console.log('GroupMembers: ' + groupMembers);
-    setMemberName('');
-    setIsModalOpen(false);
+      fetchGroupMembers();
+      setMemberName('');
+      setIsModalOpen(false);
+    }catch (e: any) {
+      const MAX_GROUP_MEMBERS = 15;
+      const MAX_MEMBER_NAME_LENGTH = 30;
+      console.error('Error adding member:', e);
+      if(memberName.length === 0) { setSubmitMessage("メンバー名は必須です。") }
+      else if(memberName.length > MAX_MEMBER_NAME_LENGTH) { setSubmitMessage(`メンバー名は${MAX_MEMBER_NAME_LENGTH}文字以内で入力してください。`) }
+      else if(groupMembers.length >= MAX_GROUP_MEMBERS) { setSubmitMessage(`メンバーは最大${MAX_GROUP_MEMBERS}人までです。`) }
+      else { setSubmitMessage('登録に失敗しました。再度、登録を試みてください') }
+    }
   };
 
   return (
@@ -120,7 +125,7 @@ export default function Users({
             <li key={member.id} className="py-3 flex items-center justify-between">
               <span className="text-gray-700">{member.name}</span>
               <Button color="danger" onClick={(e: any) => onDeleteMember(e, member.id)} className="px-3 py-1 text-xs">
-                削除
+                <TrashIcon className="h-5 w-5" />
               </Button>
             </li>
           ))}
@@ -129,6 +134,11 @@ export default function Users({
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="新しいメンバーを追加">
         <Form className="flex justify-center" onSubmit={onSubmit}>
+          {submitMessage && (
+            <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative mb-4 text-center" role="alert">
+              <span className="block sm:inline">{submitMessage}</span>
+            </div>
+          )}
           <div className="w-full">
             <Input
               id="memberName"
