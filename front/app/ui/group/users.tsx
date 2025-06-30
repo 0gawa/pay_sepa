@@ -12,7 +12,6 @@ import Input from '@/app/ui/form/text-input';
 import { deleteUser } from '@/lib/services/user-service';
 import { fetchTransactions } from '@/lib/services/transaction-service';
 import { fetchGroupBalances } from '@/lib/services/balance-service';
-import { Jersey_15 } from 'next/font/google';
 
 interface UsersProps { 
   groupId: string,
