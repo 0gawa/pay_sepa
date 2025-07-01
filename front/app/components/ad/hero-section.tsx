@@ -1,6 +1,6 @@
 "use client"
 
-import {Button} from "@heroui/react";
+import { Button } from "@heroui/react";
 
 export default function HeroSection() {
   return (
@@ -17,7 +17,7 @@ export default function HeroSection() {
           <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6">
             <Button
               as="a"
-              href="#download"
+              href="/group/new"
               className="bg-white text-indigo-600 font-bold py-3 px-8 rounded-full text-lg shadow-lg transition-all duration-300 transform hover:scale-105"
             >
               今すぐ始める

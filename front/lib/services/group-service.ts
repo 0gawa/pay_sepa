@@ -1,6 +1,6 @@
 import { Group } from '@/lib/types/group';
 
-export async function returnGroupName(groupId: string) {
+export async function returnGroup(groupId: string) {
   try {
     const response = await fetch(`${process.env.FRONT_GROUP_URL}/api/group/?groupId=${groupId}`, {
       method: 'GET',
@@ -12,9 +12,13 @@ export async function returnGroupName(groupId: string) {
     
     const data: Group = await response.json();
 
-    return data.name;
+    return data;
   }catch (e: any) {
     console.error("Server Component: データフェッチエラー:", e.message);
-    return '';
+    return {
+      id: '',
+      name: '',
+      description: '',
+    };
   }
 }
