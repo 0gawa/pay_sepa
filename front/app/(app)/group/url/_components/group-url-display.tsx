@@ -8,7 +8,7 @@ export default function GroupUrlDisplay() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
 
-  const groupUrl = `${process.env.NEXT_PUBLIC_FRONT_GROUP_URL}/group/${id}`;
+  const groupUrl = `${process.env.NEXT_PUBLIC_FRONT_GROUP_URL}group/${id}`;
 
   // URLをクリップボードにコピーする機能
   const copyToClipboard = () => {
