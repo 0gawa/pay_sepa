@@ -60,6 +60,8 @@ export default function CreateForm() {
       const data: PostResponse = await responseGroup.json();
       setSubmitMessage('グループのURL:' + process.env.NEXT_PUBLIC_FRONT_GROUP_URL + 'group/' + data.name);
 
+      router.push(`/group/url?id=${data.id}`)
+      
       // メンバーの作成
       const members_array = members.filter(member => member.trim() !== '');
       members_array.map(async (member: string) => {
@@ -74,7 +76,6 @@ export default function CreateForm() {
         }
       })      
 
-      router.push(`/group/url?id=${data.id}`)
     }catch(e: any){
       setGroupName('');
       setGroupDescription('');
