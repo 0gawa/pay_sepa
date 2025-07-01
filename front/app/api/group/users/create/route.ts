@@ -6,7 +6,7 @@ export async function POST(req: any){
     const groupId = searchParams.get("groupId");
     const name    = searchParams.get("name");
 
-    const response = await fetch(process.env.API_BASE_URL + `groups/${groupId}/users`, {
+    const response = await fetch(process.env.NEXT_PUBLIC_API_BASE_URL + `groups/${groupId}/users`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
