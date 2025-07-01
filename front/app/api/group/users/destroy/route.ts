@@ -6,7 +6,7 @@ export async function DELETE(req: any) {
     const groupId          = searchParams.get("groupId");
     const userId           = searchParams.get("userId");
 
-    const data = await fetch(process.env.NEXT_PUBLIC_API_BASE_URL + `groups/${groupId}/users/${userId}`, {
+    const data = await fetch(process.env.API_BASE_URL + `groups/${groupId}/users/${userId}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',

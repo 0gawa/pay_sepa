@@ -6,7 +6,7 @@ export async function POST(req: any){
     const name        = searchParams.get("name");
     const description = searchParams.get("description");
 
-    const response = await fetch(process.env.NEXT_PUBLIC_API_BASE_URL + "groups", {
+    const response = await fetch(process.env.API_BASE_URL + "groups", {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
