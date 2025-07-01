@@ -14,7 +14,7 @@ export default function StartAppSection() {
         <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6">
           <Button
             as="a"
-            href="#"
+            href="/group/new"
             className="bg-white text-indigo-600 font-bold py-3 px-8 rounded-full text-lg shadow-lg transition-all duration-300 transform hover:scale-105"
           >
             今すぐ始める

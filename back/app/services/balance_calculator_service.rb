@@ -6,7 +6,7 @@ class BalanceCalculatorService
   def initialize(transactions)
     @transactions = transactions
   end
-# TODO: 清算する金額を自然数にする
+
   def call
     # 清算するための取引を保存
     settlement_transactions = []

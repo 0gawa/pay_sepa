@@ -83,13 +83,13 @@ export default function Transactions({
       console.error('Error adding member:', e);
     }
 
+    await fetchTransactions(groupId, setGroupTransactions);
+    await fetchGroupBalances(groupId, setGroupBalances);
+    setIsModalOpen(false);
     setMessage('');
     setDescription('');
     setAmount(0);
     setParticipants([]);
-    await fetchTransactions(groupId, setGroupTransactions);
-    fetchGroupBalances(groupId, setGroupBalances);
-    setIsModalOpen(false);
   };
 
   return (
