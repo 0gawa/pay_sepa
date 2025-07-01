@@ -69,5 +69,5 @@ Rails.application.configure do
   # config.generators.apply_rubocop_autocorrect_after_generate!
 
   # 開発環境でDockerコンテナからアクセスできるように
-  config.hosts << ["just-pay-9bzu.onrender.com", "back:3001"]
+  config.hosts << "back:3001"
 end
