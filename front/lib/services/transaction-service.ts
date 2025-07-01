@@ -3,7 +3,7 @@ import { Transaction } from '@/lib/types/transaction';
 
 export const returnGroupTransactionData = async (groupId: string) => {
   try {
-    const response = await fetch(`${process.env.FRONT_GROUP_URL}/api/group/transactions?groupId=${groupId}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_FRONT_GROUP_URL}/api/group/transactions?groupId=${groupId}`, {
       method: 'GET',
     });
     

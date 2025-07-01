@@ -58,7 +58,7 @@ export default function CreateForm() {
       }
 
       const data: PostResponse = await responseGroup.json();
-      setSubmitMessage('グループのURL:' + process.env.FRONT_GROUP_URL + 'group/' + data.name);
+      setSubmitMessage('グループのURL:' + process.env.NEXT_PUBLIC_FRONT_GROUP_URL + 'group/' + data.name);
 
       // メンバーの作成
       const members_array = members.filter(member => member.trim() !== '');
