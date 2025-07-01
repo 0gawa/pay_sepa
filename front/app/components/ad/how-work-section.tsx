@@ -18,9 +18,8 @@ export default function HowWorkSection() {
               <p className="text-gray-700">誰が誰にいくら支払うべきか一目瞭然。あとは支払うだけです。</p>
             </div>
           </div>
-          {/* App Screenshot Placeholder */}
           <div className="flex justify-center items-center">
-            <img src="https://placehold.co/600x400/E0F2F7/000?text=App+Screenshot" alt="アプリのスクリーンショット" className="rounded-xl shadow-2xl max-w-full h-auto" />
+            <img src="/hp_ad_group_top.png" alt="アプリのスクリーンショット" className="rounded-xl shadow-2xl max-w-full h-auto" />
           </div>
         </div>
       </div>
