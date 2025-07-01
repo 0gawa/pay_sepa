@@ -11,7 +11,7 @@ export async function POST(req: any){
 
     const participantIds: number[] | undefined = stringArrayParticipantIds?.map(Number);
 
-    const response = await fetch(process.env.API_BASE_URL + `groups/${groupId}/transactions`, {
+    const response = await fetch(process.env.NEXT_PUBLIC_API_BASE_URL + `groups/${groupId}/transactions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -9,7 +9,7 @@ export async function GET(req: any) {
     const { searchParams } = new URL(req.url);
     const groupId = searchParams.get("groupId");
 
-    const data = await fetch(process.env.API_BASE_URL + `groups/${groupId}/users`, {
+    const data = await fetch(process.env.NEXT_PUBLIC_API_BASE_URL + `groups/${groupId}/users`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
