@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState } from 'react';
 import { Form } from '@heroui/react';
@@ -60,7 +60,11 @@ export default function CreateForm() {
       const data: PostResponse = await responseGroup.json();
       setSubmitMessage('グループのURL:' + process.env.NEXT_PUBLIC_FRONT_GROUP_URL + 'group/' + data.name);
 
-      router.push(`/group/url?id=${data.id}`)
+      if (data && data.id) {
+        router.push(`/group/url?id=${data.id}`);
+      } else {
+        console.error("group作成後の遷移ができませんでした。");
+      }
       
       // メンバーの作成
       const members_array = members.filter(member => member.trim() !== '');
