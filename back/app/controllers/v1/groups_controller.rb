@@ -8,9 +8,6 @@ class V1::GroupsController < ApplicationController
   def create
     group = Group.new(group_params)
     if group.save
-      response.headers['Content-Encoding'] = nil
-      response.headers.delete('Content-Encoding')
-      response.content_type = 'application/json'
       render json: group.as_json(only: [:id, :name, :description]), status: :created
     else
       render json: { errors: group.errors.full_messages }, status: :unprocessable_entity
