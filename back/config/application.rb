@@ -30,5 +30,6 @@ module App
     config.api_only = true
 
     config.hosts << "www.example.com"
+    config.hosts << "just-pay-9bzu.onrender.com"
   end
 end
