@@ -19,6 +19,7 @@ export default function CreateForm() {
   const [groupDescription, setGroupDescription] = useState('');
   const [members, setMembers] = useState(['']);
   const [submitMessage, setSubmitMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false); 
   const router = useRouter();
 
   const handleGroupNameChange = (e: any) => {
@@ -29,7 +30,7 @@ export default function CreateForm() {
     setGroupDescription(e.target.value);
   };
 
-  const handleMemberChange = (index: any, e: any) => {
+  const handleMemberChange = (index: number, e: any) => {
     const newMembers = [...members];
     newMembers[index] = e.target.value;
     setMembers(newMembers);
@@ -39,13 +40,16 @@ export default function CreateForm() {
     setMembers([...members, '']);
   };
 
-  const handleRemoveMember = (index: any) => {
+  const handleRemoveMember = (index: number) => {
     const newMembers = members.filter((_, i) => i !== index);
     setMembers(newMembers);
   };
 
   const handleSubmit = async (e:any) => {
-    e.preventDefault(); // デフォルトのフォーム送信を防ぐ
+    e.preventDefault();
+
+    setIsLoading(true);
+    setSubmitMessage('');
 
     try{
       const responseGroup = await fetch(`/api/group/create?name=${groupName}&description=${groupDescription}`, {
@@ -58,7 +62,7 @@ export default function CreateForm() {
       }
 
       const data: PostResponse = await responseGroup.json();
-      setSubmitMessage('グループのURL:' + process.env.NEXT_PUBLIC_FRONT_GROUP_URL + 'group/' + data.name);
+      setSubmitMessage(`グループのURL: ${process.env.NEXT_PUBLIC_FRONT_GROUP_URL}group/${data.id}`);
 
       if (data && data.id) {
         router.push(`/group/url?id=${data.id}`);
@@ -68,8 +72,8 @@ export default function CreateForm() {
       
       // メンバーの作成
       const members_array = members.filter(member => member.trim() !== '');
-      members_array.map(async (member: string) => {
-        const responseMembers = await fetch(`/api/group/users/create?name=${member}&groupId=${data.id}`, {
+      members_array.forEach(async (member: string) => {
+        const responseMembers = await fetch(`/api/group/users/create?name=${encodeURIComponent(member)}&groupId=${data.id}`, {
           method: 'POST',
         });
 
@@ -81,11 +85,10 @@ export default function CreateForm() {
       })      
 
     }catch(e: any){
-      setGroupName('');
-      setGroupDescription('');
-      setMembers(['']);
       console.error("エラーが発生しました")
       setSubmitMessage('入力が正しいか確認してください');
+    }finally {
+      setIsLoading(false);
     }
   };
 
@@ -98,61 +101,71 @@ export default function CreateForm() {
           </div>
         )}
 
-        <Input
-          id="groupName"
-          label="グループ名"
-          required
-          value={groupName}
-          onChange={handleGroupNameChange}
-          className="w-full sm:text-sm"
-          placeholder="例: 週末の飲み会"
-        />
-
-        <Textarea
-          id="groupDescription"
-          label="グループの説明 (任意)"
-          value={groupDescription}
-          onChange={handleGroupDescriptionChange}
-          className="w-full mt-3 sm:text-sm"
-          placeholder="このグループの目的や詳細を記入してください"
-        />
-        
-        {members.map((member, index) => (
-          <div key={index} className="flex items-center mt-2">
-            <Input
-              id={`user${index + 1}`}
-              label={`メンバー${index + 1}`}
-              value={member}
-              onChange={(e) => handleMemberChange(index, e)}
-              className="block w-full mt-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              placeholder={`例: 太郎`}
-            />
-            {members.length > 1 && (
-              <Button
-                onClick={() => handleRemoveMember(index)}
-                color="danger"
-                className="ml-2 mt-2"
-                aria-label="メンバーを削除"
-              >
-                <TrashIcon className="h-5 w-5" />
-              </Button>
-            )}
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+            <p className="mt-4 text-lg text-gray-700">グループを作成中...</p>
+            <p className="text-lg text-gray-700">30秒以上かかることもございます。</p>
           </div>
-        ))}
-        <Button
-          onClick={handleAddMember}
-          className= "flex items-center justify-center text-blue-700 bg-blue-100 hover:bg-blue-200 "
-        >
-          <PlusIcon className="h-5 w-5 mr-1"/>
-          メンバーを追加
-        </Button>
+        ) : (
+          <>
+            <Input
+              id="groupName"
+              label="グループ名"
+              required
+              value={groupName}
+              onChange={handleGroupNameChange}
+              className="w-full sm:text-sm"
+              placeholder="例: 週末の飲み会"
+            />
 
-        <Button 
-          type="submit"
-          className="text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 mt-3"
-        >
-          グループを作成
-        </Button>
+            <Textarea
+              id="groupDescription"
+              label="グループの説明 (任意)"
+              value={groupDescription}
+              onChange={handleGroupDescriptionChange}
+              className="w-full mt-3 sm:text-sm"
+              placeholder="このグループの目的や詳細を記入してください"
+            />
+            
+            {members.map((member, index) => (
+              <div key={index} className="flex items-center mt-2">
+                <Input
+                  id={`user${index + 1}`}
+                  label={`メンバー${index + 1}`}
+                  value={member}
+                  onChange={(e) => handleMemberChange(index, e)}
+                  className="block w-full mt-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  placeholder={`例: 太郎`}
+                />
+                {members.length > 1 && (
+                  <Button
+                    onClick={() => handleRemoveMember(index)}
+                    color="danger"
+                    className="ml-2 mt-2"
+                    aria-label="メンバーを削除"
+                  >
+                    <TrashIcon className="h-5 w-5" />
+                  </Button>
+                )}
+              </div>
+            ))}
+            <Button
+              onClick={handleAddMember}
+              className= "flex items-center justify-center text-blue-700 bg-blue-100 hover:bg-blue-200 "
+            >
+              <PlusIcon className="h-5 w-5 mr-1"/>
+              メンバーを追加
+            </Button>
+
+            <Button 
+              type="submit"
+              className="text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 mt-3"
+            >
+              グループを作成
+            </Button>
+          </>
+        )}
       </Form>
     </>
   )
