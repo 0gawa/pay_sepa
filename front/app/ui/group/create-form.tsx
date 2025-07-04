@@ -78,7 +78,7 @@ export default function CreateForm() {
         });
 
         if (!responseMembers.ok) {
-          await fetch(`/api/group/users/create?name=${member}&groupId${data.id}`, {
+          await fetch(`/api/group/users/create?name=${encodeURIComponent(member)}&groupId=${data.id}`, {
             method: 'POST',
           });
         }
