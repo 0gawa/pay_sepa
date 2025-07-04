@@ -7,7 +7,7 @@ export const returnGroupBalanceData = async (groupId: string) => {
     });
     
     if (!response.ok) {
-      throw new Error('Failed to fetch group members');
+      throw new Error('Failed to fetch group balance');
     }
     
     const data: GetResponse = await response.json();
@@ -25,7 +25,7 @@ export const fetchGroupBalances = async (groupId: string, setGroupBalances: Reac
     });
     
     if (!response.ok) {
-      throw new Error('Failed to fetch group members');
+      throw new Error('Failed to fetch group balance');
     }
     
     const data: GetResponse = await response.json();
