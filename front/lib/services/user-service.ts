@@ -17,7 +17,7 @@ export const deleteUser = async (groupId: string, userId: number) => {
 
 export const returnGroupMemberData = async (groupId: string) => {
   try {
-    const response = await fetch(`${process.env.FRONT_GROUP_URL}/api/group/users?groupId=${groupId}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_FRONT_GROUP_URL}/api/group/users?groupId=${groupId}`, {
       method: 'GET',
     });
 

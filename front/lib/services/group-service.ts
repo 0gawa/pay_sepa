@@ -2,7 +2,7 @@ import { Group } from '@/lib/types/group';
 
 export async function returnGroup(groupId: string) {
   try {
-    const response = await fetch(`${process.env.FRONT_GROUP_URL}/api/group/?groupId=${groupId}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_FRONT_GROUP_URL}/api/group/?groupId=${groupId}`, {
       method: 'GET',
     });
 
