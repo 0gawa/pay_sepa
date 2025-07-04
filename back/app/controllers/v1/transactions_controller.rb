@@ -3,6 +3,7 @@ class V1::TransactionsController < ApplicationController
   rescue_from ActiveRecord::RecordInvalid, with: :render_unprocessable_entity
 
   before_action :set_group
+  before_action :set_transaction, only: [:update, :destroy]
 
   def index
     transactions = @group.transaction_data.includes(:payer, :participants)
@@ -47,9 +48,32 @@ class V1::TransactionsController < ApplicationController
     ), status: :created
   end
 
+  def update
+    participant_ids = transaction_params[:participant_ids]
+
+    ActiveRecord::Base.transaction do
+      @transaction.update!(transaction_params.except(:participant_ids))
+
+      if participant_ids and not participant_ids.empty?
+        participants = @group.users.where(id: participant_ids)
+        if participants.size != participant_ids.size
+          raise ActiveRecord::RecordInvalid.new(@transaction, "指定された参加者の中に、このグループに属さないメンバーが含まれています。")
+        end
+        @transaction.participants = participants
+      end
+    end
+
+    render json: @transaction.as_json(
+      include: {
+        payer: { only: [:id, :name] },
+        participants: { only: [:id, :name] }
+      },
+      only: [:id, :date, :amount, :description, :payer_id]
+    ), status: :ok
+  end
+
   def destroy
-    transaction = @group.transaction_data.find(params[:id])
-    transaction.destroy
+    @transaction.destroy
     render json: { message: "Transaction deleted successfully" }, status: :ok
   end
 
@@ -61,6 +85,10 @@ class V1::TransactionsController < ApplicationController
 
   def set_group
     @group = Group.find(params[:group_id])
+  end
+
+  def set_transaction
+    @transaction = @group.transaction_data.find(params[:id])
   end
 
   def render_not_found(exception)
