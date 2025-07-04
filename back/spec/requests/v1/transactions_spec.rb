@@ -124,7 +124,7 @@ RSpec.describe "V1::Transactionsコントローラーについて", type: :reque
           }
         end
 
-        before {  post v1_group_transactions_path(group_id: group.id), params: invalid_attributes_no_participants }
+        before { post v1_group_transactions_path(group_id: group.id), params: invalid_attributes_no_participants }
 
         it "HTTPステータス422を返すこと" do
           expect(response).to have_http_status(:unprocessable_entity)
@@ -162,27 +162,60 @@ RSpec.describe "V1::Transactionsコントローラーについて", type: :reque
 
       context "payer_id が存在しない場合" do
         let(:invalid_attributes_invalid_payer) do
-           {
-             transaction: {
-               payer_id: 9999, # 存在しないPayer ID
-               amount: 1000,
-               description: "Invalid Payer",
-               participant_ids: [user1.id]
-             }
-           }
-         end
+          {
+            transaction: {
+              payer_id: 9999, # 存在しないPayer ID
+              amount: 1000,
+              description: "Invalid Payer",
+              participant_ids: [user1.id]
+            }
+          }
+        end
 
-         before { post v1_group_transactions_path(group_id: group.id), params: invalid_attributes_invalid_payer }
+        before { post v1_group_transactions_path(group_id: group.id), params: invalid_attributes_invalid_payer }
 
-         it "HTTPステータス422を返すこと" do
-           expect(response).to have_http_status(:unprocessable_entity)
-         end
+        it "HTTPステータス422を返すこと" do
+          expect(response).to have_http_status(:unprocessable_entity)
+        end
 
-         it "エラーメッセージを返すこと" do
-           json_response = JSON.parse(response.body)
-           expect(json_response["errors"]).to include("Payer must exist")
-         end
-       end
+        it "エラーメッセージを返すこと" do
+          json_response = JSON.parse(response.body)
+          expect(json_response["errors"]).to include("Payer must exist")
+        end
+      end
+    end
+  end
+
+  describe "updateアクションについて" do
+    let!(:transaction) { create(:transaction, group: group, payer: payer, amount: 1000, description: "Lunch", participants: [user1, user2]) }
+    let!(:update_params) do
+      {
+        transaction: {
+          payer_id: payer.id,
+          amount: 1500,
+          description: "Dinner",
+          participant_ids: [user1.id]
+        }
+      }
+    end
+
+    before { patch v1_group_transaction_path(group_id: group.id, id: transaction.id), params: update_params }
+    
+    it 'トランザクションを更新し、200 OKを返すこと' do
+      expect(response).to have_http_status(:ok)
+
+      json_response = JSON.parse(response.body)
+      expect(json_response['id']).to eq(transaction.id)
+      expect(json_response['amount']).to eq("1500.0")
+      expect(json_response['description']).to eq("Dinner")
+      expect(json_response['payer']['id']).to eq(payer.id)
+      expect(json_response['participants'].map { |p| p['id'] }).to match_array([user1.id])
+
+      transaction.reload
+      expect(transaction.amount).to eq(1500)
+      expect(transaction.description).to eq("Dinner")
+      expect(transaction.payer).to eq(payer)
+      expect(transaction.participants).to match_array([user1])
     end
   end
 

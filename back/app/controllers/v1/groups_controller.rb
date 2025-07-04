@@ -1,5 +1,5 @@
 class V1::GroupsController < ApplicationController
-  before_action :set_group, only: [:show, :destroy]
+  before_action :set_group, only: [:show, :update, :destroy]
 
   def show
     render json: @group.as_json(only: [:id, :name, :description]), status: :ok
@@ -11,6 +11,14 @@ class V1::GroupsController < ApplicationController
       render json: group.as_json(only: [:id, :name, :description]), status: :created
     else
       render json: { errors: group.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+
+  def update
+    if @group.update(group_params)
+      render json: @group.as_json(only: [:id, :name, :description]), status: :ok
+    else
+      render json: { errors: @group.errors.full_messages }, status: :unprocessable_entity
     end
   end
 

@@ -1,10 +1,10 @@
 Rails.application.routes.draw do
   namespace :v1 do
-    resources :groups, only: [:show, :create, :destroy] do
-      resources :users,        only: [:create, :destroy, :index]
-      resources :transactions, only: [:index, :create, :destroy]
+    resources :groups, only: [:show, :create, :update, :destroy] do
+      resources :users,        only: [:index, :create, :destroy]
+      resources :transactions, only: [:index, :create, :update, :destroy]
       resources :settlements,  only: [:index, :create, :destroy]
-      resources :balances,     only: [:index] 
+      resources :balances,     only: [:index]
     end
   end
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

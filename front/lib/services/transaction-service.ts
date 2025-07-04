@@ -8,7 +8,7 @@ export const returnGroupTransactionData = async (groupId: string) => {
     });
     
     if (!response.ok) {
-      throw new Error('Failed to fetch group members');
+      throw new Error('Failed to fetch group transactions');
     }
     
     const data: GetResponse[] = await response.json();
@@ -40,7 +40,7 @@ export const fetchTransactions = async (groupId: string, setGroupTransactions: R
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch group members');
+        throw new Error('Failed to fetch group transactions');
       }
 
       const data: GetResponse[] = await response.json();
