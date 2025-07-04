@@ -29,6 +29,6 @@ module App
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
 
-    config.hosts << "just-pay-9bzu.onrender.com"
+    config.hosts << "www.example.com"
   end
 end
